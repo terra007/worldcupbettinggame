@@ -328,9 +328,8 @@
   /* ---------- init ---------- */
   async function init(){
     try{$("#tzName").textContent=Intl.DateTimeFormat().resolvedOptions().timeZone||"your local timezone";}catch(e){}
-    config = await loadConfig();
-    results = await loadResults();
-    roster = await listPlayers();
+    var loaded = await Promise.all([loadConfig(), loadResults(), listPlayers()]);
+    config = loaded[0]; results = loaded[1]; roster = loaded[2];
     renderPoolName();
     me = await pget("me");
     if(me){ myBets = await loadBets(me); renderMeBar(); }
@@ -355,14 +354,21 @@
   }
   async function joinAs(name){
     name=(name||"").trim(); if(!name){ $("#nameInput").focus(); return; }
-    me=name; await pset("me",me);
-    await addPlayer(me);
-    roster=await listPlayers();
-    myBets=await loadBets(me);
-    $("#nameModal").classList.remove("show");
-    renderMeBar(); renderMatches();
-    if(curTab==="board") renderBoard();
-    toast("Welcome, "+me+"!");
+    var goBtn=$("#nameGo");
+    goBtn.disabled=true; goBtn.textContent="Joining…";
+    var isRejoin=roster.indexOf(name)>=0 && name!==me;
+    try{
+      me=name; await pset("me",me);
+      await addPlayer(me);
+      var loaded=await Promise.all([listPlayers(), loadBets(me)]);
+      roster=loaded[0]; myBets=loaded[1];
+      $("#nameModal").classList.remove("show");
+      renderMeBar(); renderMatches();
+      if(curTab==="board") renderBoard();
+      toast(isRejoin?"Welcome back, "+me+"! Your bets are loaded.":"Welcome, "+me+"!");
+    }finally{
+      goBtn.disabled=false; goBtn.textContent="Let me in →";
+    }
   }
   $("#nameGo").onclick=function(){joinAs($("#nameInput").value);};
   $("#nameInput").addEventListener("keydown",function(e){if(e.key==="Enter")joinAs(this.value);});
@@ -458,15 +464,24 @@
       var ins=card.querySelectorAll(".score-in");
       ins.forEach(function(inp){ inp.addEventListener("input",function(){ btn.classList.remove("saved"); btn.textContent="Save"; }); });
       btn.onclick=async function(){
+        if(btn.disabled) return;
         var id=card.getAttribute("data-id");
         var h=parseInt(card.querySelector('[data-side="h"]').value,10);
         var a=parseInt(card.querySelector('[data-side="a"]').value,10);
         if(isNaN(h)||isNaN(a)||h<0||a<0){ toast("Enter both scores"); return; }
-        myBets[id]={h:h,a:a};
-        await saveBet(me,id,h,a);
-        if(roster.indexOf(me)<0){ await addPlayer(me); roster=await listPlayers(); renderMeBar(); }
-        btn.classList.add("saved"); btn.textContent="Saved ✓";
-        toast("Prediction saved");
+        btn.disabled=true; btn.textContent="Saving…";
+        try{
+          myBets[id]={h:h,a:a};
+          await saveBet(me,id,h,a);
+          if(roster.indexOf(me)<0){ await addPlayer(me); roster=await listPlayers(); renderMeBar(); }
+          btn.classList.add("saved"); btn.textContent="Saved ✓";
+          toast("Prediction saved");
+        }catch(e){
+          toast("Couldn't save — check connection");
+          btn.textContent="Save";
+        }finally{
+          btn.disabled=false;
+        }
       };
     });
   }
@@ -475,9 +490,8 @@
   async function renderBoard(){
     var v=$("#view-board");
     v.innerHTML='<div class="empty"><div class="big">Loading…</div>Tallying predictions.</div>';
-    roster=await listPlayers();
-    results=await loadResults();
-    var allBets=await loadAllBets();
+    var loaded=await Promise.all([listPlayers(), loadResults(), loadAllBets()]);
+    roster=loaded[0]; results=loaded[1]; var allBets=loaded[2];
     var resCount=Object.keys(results).length;
     if(!roster.length){ v.innerHTML='<div class="empty"><div class="big">No players yet</div>Share the invite link and start predicting.</div>'; return; }
 
