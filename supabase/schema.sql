@@ -1,28 +1,50 @@
--- World Cup 2026 Betting Pool — Neon Postgres schema
--- Run this in the Neon SQL Editor (app.neon.tech → your project → SQL Editor).
+-- World Cup 2026 — multi-pool schema
+-- Run ONCE in Neon SQL Editor (replaces previous schema).
 
-create table if not exists pool_config (
-  id int primary key default 1,
-  pool_name text not null default 'World Cup 2026 Pool',
-  organizer_code text not null default '',
-  constraint single_row check (id = 1)
+create table if not exists site_config (
+  key   text primary key,
+  value text not null
+);
+
+create table if not exists pool_creators (
+  name       text primary key,
+  granted_at timestamptz not null default now()
 );
 
 create table if not exists players (
-  name text primary key,
+  name      text primary key,
   joined_at timestamptz not null default now()
 );
 
-create table if not exists bets (
+create table if not exists pools (
+  id             text primary key,
+  name           text not null,
+  invite_code    text unique not null,
+  organizer_code text not null,
+  owner_name     text not null,
+  created_at     timestamptz not null default now()
+);
+
+create table if not exists pool_members (
+  pool_id     text not null references pools(id) on delete cascade,
   player_name text not null,
-  match_id text not null,
-  home_score int not null,
-  away_score int not null,
-  primary key (player_name, match_id)
+  joined_at   timestamptz not null default now(),
+  primary key (pool_id, player_name)
+);
+
+create table if not exists bets (
+  pool_id     text not null references pools(id) on delete cascade,
+  player_name text not null,
+  match_id    text not null,
+  home_score  int  not null,
+  away_score  int  not null,
+  primary key (pool_id, player_name, match_id)
 );
 
 create table if not exists results (
-  match_id text primary key,
-  home_score int not null,
-  away_score int not null
+  pool_id    text not null references pools(id) on delete cascade,
+  match_id   text not null,
+  home_score int  not null,
+  away_score int  not null,
+  primary key (pool_id, match_id)
 );

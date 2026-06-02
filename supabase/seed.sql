@@ -1,12 +1,14 @@
--- World Cup 2026 Pool — organizer seed
--- Run this ONCE in the Neon SQL Editor, AFTER schema.sql.
--- Replace REPLACE_WITH_YOUR_CODE with a secret only you know.
+-- Run ONCE in Neon SQL Editor, AFTER schema.sql.
+-- Replace both placeholder codes with your own secrets.
 
-INSERT INTO pool_config (id, pool_name, organizer_code)
-VALUES (1, 'World Cup 2026 — Max', 'REPLACE_WITH_YOUR_CODE')
-ON CONFLICT (id) DO UPDATE SET
-  pool_name     = EXCLUDED.pool_name,
-  organizer_code = EXCLUDED.organizer_code;
+-- Max's admin code (used to grant/revoke pool-creation rights)
+insert into site_config (key, value)
+values ('admin_code', 'REPLACE_WITH_MAX_ADMIN_CODE')
+on conflict (key) do update set value = excluded.value;
 
-INSERT INTO players (name) VALUES ('Max')
-ON CONFLICT (name) DO NOTHING;
+-- Max is the only one who can create pools by default
+insert into pool_creators (name) values ('Max')
+on conflict (name) do nothing;
+
+insert into players (name) values ('Max')
+on conflict (name) do nothing;
