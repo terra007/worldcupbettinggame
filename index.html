@@ -204,64 +204,39 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 (function(){
   "use strict";
 
-  /* ---------- Supabase client ----------
-     Replace these two values with your project's URL and anon key.
-     Find them at: supabase.com → your project → Settings → API        */
-  var SUPABASE_URL      = "https://YOUR-PROJECT-ID.supabase.co";
-  var SUPABASE_ANON_KEY = "your-anon-key-here";
-  var db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  /* ---------- storage — Supabase ---------- */
+  /* ---------- storage — Neon via /api/kv ---------- */
+  var API = "/api/kv";
+  async function apiGet(params){
+    var qs=Object.entries(params).map(function(e){return e[0]+"="+encodeURIComponent(e[1]);}).join("&");
+    var r=await fetch(API+"?"+qs,{cache:"no-store"});
+    if(!r.ok) throw new Error("api "+r.status);
+    return r.json();
+  }
+  async function apiPost(body){
+    var r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(!r.ok) throw new Error("api "+r.status);
+    return r.json();
+  }
   async function loadConfig(){
-    var r = await db.from("pool_config").select("*").eq("id",1).maybeSingle();
-    if(!r.data) return {poolName:"World Cup 2026 Pool", code:""};
-    return {poolName: r.data.pool_name, code: r.data.organizer_code};
-  }
-  async function saveConfig(cfg){
-    await db.from("pool_config").upsert({id:1, pool_name:cfg.poolName, organizer_code:cfg.code});
-  }
+    try{var d=await apiGet({action:"config"}); return {poolName:d.pool_name||"World Cup 2026 Pool",code:d.organizer_code||""};}
+    catch(e){return {poolName:"World Cup 2026 Pool",code:""};}}
+  async function saveConfig(cfg){await apiPost({action:"saveConfig",poolName:cfg.poolName,code:cfg.code});}
   async function listPlayers(){
-    var r = await db.from("players").select("name").order("joined_at");
-    return (r.data||[]).map(function(p){return p.name;});
-  }
-  async function addPlayer(name){
-    await db.from("players").upsert({name:name},{onConflict:"name",ignoreDuplicates:true});
-  }
+    try{var d=await apiGet({action:"players"}); return d.players||[];}catch(e){return [];}}
+  async function addPlayer(name){await apiPost({action:"addPlayer",name:name});}
   async function loadBets(playerName){
-    var r = await db.from("bets").select("match_id,home_score,away_score").eq("player_name",playerName);
-    var bets={};
-    (r.data||[]).forEach(function(row){bets[row.match_id]={h:row.home_score,a:row.away_score};});
-    return bets;
-  }
-  async function saveBet(playerName,matchId,h,a){
-    await db.from("bets").upsert({player_name:playerName,match_id:matchId,home_score:h,away_score:a});
-  }
+    try{var d=await apiGet({action:"bets",player:playerName}); return d.bets||{};}catch(e){return {};}}
+  async function saveBet(playerName,matchId,h,a){await apiPost({action:"saveBet",playerName:playerName,matchId:matchId,h:h,a:a});}
   async function loadResults(){
-    var r = await db.from("results").select("*");
-    var res={};
-    (r.data||[]).forEach(function(row){res[row.match_id]={h:row.home_score,a:row.away_score};});
-    return res;
-  }
-  async function saveResult(matchId,h,a){
-    await db.from("results").upsert({match_id:matchId,home_score:h,away_score:a});
-  }
-  async function clearResult(matchId){
-    await db.from("results").delete().eq("match_id",matchId);
-  }
+    try{var d=await apiGet({action:"results"}); return d.results||{};}catch(e){return {};}}
+  async function saveResult(matchId,h,a){await apiPost({action:"saveResult",matchId:matchId,h:h,a:a});}
+  async function clearResult(matchId){await apiPost({action:"clearResult",matchId:matchId});}
   async function loadAllBets(){
-    var r = await db.from("bets").select("player_name,match_id,home_score,away_score");
-    var all={};
-    (r.data||[]).forEach(function(row){
-      if(!all[row.player_name]) all[row.player_name]={};
-      all[row.player_name][row.match_id]={h:row.home_score,a:row.away_score};
-    });
-    return all;
-  }
+    try{var d=await apiGet({action:"allbets"}); return d.bets||{};}catch(e){return {};}}
   // personal (this device only)
   function pget(k){try{return Promise.resolve(JSON.parse(localStorage.getItem("wm26_"+k)));}catch(e){return Promise.resolve(null);}}
   function pset(k,v){try{localStorage.setItem("wm26_"+k,JSON.stringify(v));}catch(e){} return Promise.resolve();}
