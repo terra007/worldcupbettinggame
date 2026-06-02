@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#06130d"/>
+  <!-- Ball body -->
+  <circle cx="256" cy="206" r="130" fill="#b6ff3a"/>
+  <!-- Pentagon patches (classic soccer ball) -->
+  <polygon points="256,118 304,147 304,204 256,233 208,204 208,147" fill="#06130d"/>
+  <polygon points="304,147 362,126 388,176 370,224 316,228 304,204" fill="#06130d" opacity="0.55"/>
+  <polygon points="208,147 150,126 124,176 142,224 196,228 208,204" fill="#06130d" opacity="0.55"/>
+  <polygon points="316,228 370,224 374,282 332,308 280,290 280,258" fill="#06130d" opacity="0.55"/>
+  <polygon points="196,228 142,224 138,282 180,308 232,290 232,258" fill="#06130d" opacity="0.55"/>
+  <polygon points="280,258 280,290 256,306 232,290 232,258 256,242" fill="#06130d" opacity="0.55"/>
+  <!-- Ball outline -->
+  <circle cx="256" cy="206" r="130" fill="none" stroke="#0c2418" stroke-width="5"/>
+  <!-- Year -->
+  <text x="256" y="422" text-anchor="middle"
+        font-family="Arial Black,Arial,sans-serif"
+        font-size="90" font-weight="900" fill="#b6ff3a">2026</text>
+</svg>

@@ -1,4 +1,17 @@
-<!-- World Cup 2026 Betting Pool -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#06130d">
+<meta name="description" content="World Cup 2026 prediction pool — pick scores, compete with friends">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="WC26 Pool">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<title>World Cup 2026 Pool</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -21,7 +34,7 @@
       radial-gradient(700px 500px at -5% 8%, rgba(70,214,255,.07), transparent 60%),
       radial-gradient(800px 600px at 50% 120%, rgba(255,90,60,.07), transparent 60%),
       var(--bg);
-    padding:0 0 80px;
+    padding: 0 0 calc(80px + env(safe-area-inset-bottom, 0px));
   }
   /* faint pitch lines */
   body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;z-index:0;
@@ -161,7 +174,10 @@
   .empty{text-align:center;color:var(--mut);padding:40px 10px;font-size:14px}
   .empty .big{font-family:var(--display);font-size:30px;color:var(--mut2);margin-bottom:8px;letter-spacing:.04em}
   .foot{text-align:center;color:var(--mut2);font-size:11px;margin-top:24px;line-height:1.6}
+  button,.tab,.chip,.save,.btn,.linkbtn{touch-action:manipulation}
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header>
@@ -689,3 +705,10 @@
   init();
 })();
 </script>
+<script>
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "World Cup 2026 Pool",
+  "short_name": "WC26 Pool",
+  "description": "World Cup 2026 prediction pool — pick scores, compete with friends",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#06130d",
+  "theme_color": "#06130d",
+  "categories": ["games", "sports"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
