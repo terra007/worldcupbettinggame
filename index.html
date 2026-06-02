@@ -78,7 +78,8 @@
   .match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
   .team{display:flex;align-items:center;gap:9px;min-width:0}
   .team.away{flex-direction:row-reverse;text-align:right}
-  .flag{font-size:26px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+  .flag{flex-shrink:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+  .flag img{width:28px;height:auto;border-radius:2px;display:block}
   .tname{font-weight:800;font-size:15.5px;line-height:1.05;overflow:hidden;text-overflow:ellipsis}
   .vs{font-family:var(--display);color:var(--mut2);font-size:13px;padding:0 2px}
 
@@ -195,7 +196,7 @@
 <div class="modal" id="nameModal">
   <div class="box">
     <h3>Join the <span class="em">pool</span></h3>
-    <p>Enter the name your friends will recognise. It tags your predictions and your spot on the leaderboard.</p>
+    <p>Pick the name your friends will recognise. <b>You can't change it after joining</b> — choose carefully.</p>
     <input class="txt" id="nameInput" placeholder="e.g. Lukas" maxlength="22" autocomplete="off">
     <div style="height:14px"></div>
     <button class="btn" id="nameGo" style="width:100%">Let me in →</button>
@@ -242,7 +243,7 @@
   function pset(k,v){try{localStorage.setItem("wm26_"+k,JSON.stringify(v));}catch(e){} return Promise.resolve();}
 
   /* ---------- data ---------- */
-  var FLAGS={Mexico:"🇲🇽","South Africa":"🇿🇦",USA:"🇺🇸",Paraguay:"🇵🇾",Qatar:"🇶🇦",Switzerland:"🇨🇭",Brazil:"🇧🇷",Morocco:"🇲🇦",Haiti:"🇭🇹",Scotland:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",Germany:"🇩🇪","Curacao":"🇨🇼",Netherlands:"🇳🇱",Japan:"🇯🇵","Ivory Coast":"🇨🇮",Ecuador:"🇪🇨",Spain:"🇪🇸","Cape Verde":"🇨🇻",Belgium:"🇧🇪",Egypt:"🇪🇬","Saudi Arabia":"🇸🇦",Uruguay:"🇺🇾",Iran:"🇮🇷","New Zealand":"🇳🇿",France:"🇫🇷",Senegal:"🇸🇳",Argentina:"🇦🇷",Algeria:"🇩🇿",Austria:"🇦🇹",Jordan:"🇯🇴",England:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",Croatia:"🇭🇷",Ghana:"🇬🇭",Panama:"🇵🇦",Uzbekistan:"🇺🇿",Colombia:"🇨🇴","South Korea":"🇰🇷",Canada:"🇨🇦",Tunisia:"🇹🇳",Norway:"🇳🇴",Portugal:"🇵🇹",Australia:"🇦🇺"};
+  var ISO={Mexico:"mx","South Africa":"za",USA:"us",Paraguay:"py",Qatar:"qa",Switzerland:"ch",Brazil:"br",Morocco:"ma",Haiti:"ht",Scotland:"gb-sct",Germany:"de",Curacao:"cw",Netherlands:"nl",Japan:"jp","Ivory Coast":"ci",Ecuador:"ec",Spain:"es","Cape Verde":"cv",Belgium:"be",Egypt:"eg","Saudi Arabia":"sa",Uruguay:"uy",Iran:"ir","New Zealand":"nz",France:"fr",Senegal:"sn",Argentina:"ar",Algeria:"dz",Austria:"at",Jordan:"jo",England:"gb-eng",Croatia:"hr",Ghana:"gh",Panama:"pa",Uzbekistan:"uz",Colombia:"co","South Korea":"kr",Canada:"ca",Tunisia:"tn",Norway:"no",Portugal:"pt",Australia:"au"};
 
   // id, group, home, away, kickoff (UTC ISO)
   var MATCHES=[
@@ -308,7 +309,11 @@
 
   /* ---------- helpers ---------- */
   var $=function(s,r){return (r||document).querySelector(s);};
-  var fl=function(n){return FLAGS[n]||"⚽";};
+  var fl=function(n){
+    var c=ISO[n];
+    if(!c) return '<img src="https://flagcdn.com/w40/un.png" width="28" height="auto" alt="" style="border-radius:2px">';
+    return '<img src="https://flagcdn.com/w40/'+c+'.png" width="28" height="auto" alt="'+esc(n)+'" style="border-radius:2px">';
+  };
   function fmtDay(ts){return new Date(ts).toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});}
   function fmtTime(ts){return new Date(ts).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});}
   function dayKey(ts){var d=new Date(ts);return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();}
@@ -332,8 +337,10 @@
     config = loaded[0]; results = loaded[1]; roster = loaded[2];
     renderPoolName();
     me = await pget("me");
-    if(me){ myBets = await loadBets(me); renderMeBar(); }
-    else { showNameModal(); }
+    if(me){
+      if(roster.indexOf(me)<0) await addPlayer(me);
+      myBets = await loadBets(me); renderMeBar();
+    } else { showNameModal(); }
     renderMatches();
     tickCountdown(); setInterval(tickCountdown,1000);
   }
@@ -341,23 +348,21 @@
   function renderPoolName(){ $("#poolName").innerHTML='<span>Pool:</span> '+esc(config.poolName||"World Cup 2026 Pool"); }
   function renderMeBar(){
     $("#meBar").innerHTML='<span class="me-chip">Playing as <b>'+esc(me)+'</b></span>'+
-      '<span>'+roster.length+' player'+(roster.length===1?"":"s")+' in the pool</span>'+
-      '<button class="linkbtn" id="switchBtn">change name</button>';
-    $("#switchBtn").onclick=function(){showNameModal(true);};
+      '<span>'+roster.length+' player'+(roster.length===1?"":"s")+' in the pool</span>';
   }
 
   /* ---------- name modal ---------- */
-  function showNameModal(isSwitch){
+  function showNameModal(){
     var m=$("#nameModal"); m.classList.add("show");
-    $("#nameInput").value=isSwitch?(me||""):"";
+    $("#nameInput").value="";
     setTimeout(function(){$("#nameInput").focus();},50);
   }
   async function joinAs(name){
     name=(name||"").trim(); if(!name){ $("#nameInput").focus(); return; }
     var goBtn=$("#nameGo");
     goBtn.disabled=true; goBtn.textContent="Joining…";
-    var isRejoin=roster.indexOf(name)>=0 && name!==me;
     try{
+      var isRejoin=roster.indexOf(name)>=0;
       me=name; await pset("me",me);
       await addPlayer(me);
       var loaded=await Promise.all([listPlayers(), loadBets(me)]);
@@ -660,6 +665,7 @@
     curTab=b.getAttribute("data-tab");
     document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("active",t===b);});
     ["matches","board","rules","invite","org"].forEach(function(k){ $("#view-"+k).style.display=(k===curTab)?"block":"none"; });
+    if(curTab==="matches") renderMatches();
     if(curTab==="board") renderBoard();
     if(curTab==="rules") renderRules();
     if(curTab==="invite") renderInvite();
