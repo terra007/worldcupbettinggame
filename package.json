@@ -1,0 +1,6 @@
+{
+  "name": "worldcup-2026-pool",
+  "version": "1.0.0",
+  "private": true,
+  "description": "World Cup 2026 prediction/betting pool — static frontend + Supabase."
+}
