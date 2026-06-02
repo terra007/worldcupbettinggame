@@ -554,17 +554,31 @@
   /* ---------- invite ---------- */
   function renderInvite(){
     var url=""; try{url=window.location.href;}catch(e){}
+    var poolLabel=esc(config.poolName||"World Cup 2026 Pool");
+    var msg="Join "+poolLabel+"! Pick your match scores and compete on the leaderboard. Open here: "+url;
+    var waHref="https://wa.me/?text="+encodeURIComponent(msg);
+    var mailHref="mailto:?subject="+encodeURIComponent("Join "+poolLabel)+"&body="+encodeURIComponent(msg);
     $("#view-invite").innerHTML=
     '<div class="pnl"><h2>Invite your <span class="em">crew</span></h2>'+
-    '<p>Everyone who opens this site and picks a name joins <b>one shared pool</b> — same matches, same live leaderboard. Predictions are tied to each person\'s name.</p>'+
-    '<div class="row-in"><input class="txt" id="inviteUrl" readonly value="'+esc(url||"")+'" style="flex:1;min-width:200px">'+
-    '<button class="btn" id="copyUrl">Copy link</button></div>'+
-    '<div class="hint">Just send this page\'s link to your colleagues — bookmark it, drop it in Slack or email. Anyone with the link can join, predict, and appear on the board. No login required.</div>'+
+    '<p>Share the link below — anyone who opens it picks a name and joins the pool instantly. No account needed.</p>'+
+    '<div class="row-in"><input class="txt" id="inviteUrl" readonly value="'+esc(url||"")+'" style="flex:1;min-width:160px">'+
+    '<button class="btn" id="copyUrl">Copy</button></div>'+
+    '<div class="row-in" style="margin-top:10px">'+
+    '<a class="btn" href="'+waHref+'" target="_blank" rel="noopener" style="background:#25d366;text-decoration:none;display:inline-flex;align-items:center;gap:6px">'+
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.562 4.14 1.542 5.877L.057 23.882a.5.5 0 0 0 .606.63l6.288-1.643A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.893a9.878 9.878 0 0 1-5.036-1.378l-.361-.214-3.735.976.998-3.645-.235-.374A9.876 9.876 0 0 1 2.107 12C2.107 6.558 6.558 2.107 12 2.107S21.893 6.558 21.893 12 17.442 21.893 12 21.893z"/></svg>'+
+    'WhatsApp</a>'+
+    '<a class="btn ghost" href="'+mailHref+'" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">'+
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>'+
+    'Email</a>'+
     '</div>'+
-    '<div class="pnl"><h2>Quick <span class="em">start</span></h2>'+
-    '<p>1 — Send everyone this page\'s link.</p><p>2 — Each person opens it and enters their name.</p>'+
-    '<p>3 — Everyone predicts scores before kickoff.</p><p>4 — One person (the organizer) sets a code in the Organizer tab and logs results as games finish.</p>'+
-    '<p>5 — Watch the leaderboard fight play out. 🏆</p></div>';
+    '<div class="hint" style="margin-top:10px">Anyone with the link can join — bookmark it, drop it in Slack, WhatsApp or email. No login required.</div>'+
+    '</div>'+
+    '<div class="pnl"><h2>How it <span class="em">works</span></h2>'+
+    '<p>1 — Share the link above with your group.</p>'+
+    '<p>2 — Each person opens it and picks their name.</p>'+
+    '<p>3 — Everyone predicts scores before each kickoff.</p>'+
+    '<p>4 — The organizer logs final scores in the Organizer tab after each match.</p>'+
+    '<p>5 — Points update instantly on the leaderboard.</p></div>';
     var btn=$("#copyUrl");
     if(btn) btn.onclick=function(){
       var inp=$("#inviteUrl"); inp.select();
