@@ -371,7 +371,7 @@ var MATCHES=[
   // Third-place play-off
   ["m85","3P","L83","L84","2026-07-25T19:00:00Z"],
   // Final
-  ["m86","F","W83","W84","2026-07-26T20:00:00Z"]
+  ["m86","FIN","W83","W84","2026-07-26T20:00:00Z"]
 ].map(function(m){return {id:m[0],grp:m[1],h:m[2],a:m[3],kt:new Date(m[4]).getTime()};});
 
 /* ── App state ────────────────────────────────────────────── */
@@ -669,9 +669,9 @@ function tickCountdown(){
 function renderMatches(){
   var v=$("#view-matches"),now=Date.now();
   var hadSearchFocus=document.activeElement&&document.activeElement.classList.contains("team-search");
-  var groups=["ALL","A","B","C","D","E","F","G","H","I","J","K","L","R32","R16","QF","SF","3P","F"];
+  var groups=["ALL","A","B","C","D","E","F","G","H","I","J","K","L","R32","R16","QF","SF","3P","FIN"];
   var html='<div class="filters">';
-  var KO={"R32":"R32","R16":"R16","QF":"QF","SF":"SF","3P":"3rd","F":"Final"};
+  var KO={"R32":"R32","R16":"R16","QF":"QF","SF":"SF","3P":"3rd","FIN":"Final"};
   groups.forEach(function(g){html+='<button class="chip'+(grpFilter===g?" active":"")+'" data-g="'+g+'">'+(g==="ALL"?"All":(KO[g]||"Grp "+g))+'</button>';});
   html+='<label class="toggle"><input type="checkbox" id="hideChk"'+(hideStarted?" checked":"")+'> hide started</label></div>';
   html+='<div class="team-search-wrap"><input class="team-search" type="text" placeholder="Search team…" value="'+esc(teamFilter)+'"></div>';
