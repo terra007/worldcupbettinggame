@@ -13,6 +13,7 @@ create table if not exists pool_creators (
 
 create table if not exists players (
   name      text primary key,
+  token     text unique,
   joined_at timestamptz not null default now()
 );
 

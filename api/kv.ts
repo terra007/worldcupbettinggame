@@ -8,6 +8,32 @@ type Score = { h: number; a: number };
 type BetMap = Record<string, Score>;
 type AllBetsMap = Record<string, BetMap>;
 
+// Kickoff times (ms UTC) — used for server-side bet lock and allbets filtering
+const KICKOFFS: Record<string, number> = {
+  m01:1749675600000,m02:1749783600000,m03:1749859200000,m04:1749859200000,
+  m05:1749869400000,m06:1749924000000,m07:1749934200000,m08:1749942000000,
+  m09:1750003200000,m10:1750024800000,m11:1750024800000,m12:1750046400000,
+  m13:1750100400000,m14:1750125600000,m15:1750143600000,m16:1750197600000,
+  m17:1750204800000,m18:1750215600000,m19:1750294800000,m20:1750302000000,
+  m21:1750377600000,m22:1750377600000,m23:1750388400000,m24:1750449600000,
+  m25:1750467600000,m26:1750489200000,m27:1750521600000,m28:1750546800000,
+  m29:1750546800000,m30:1750564800000,m31:1750604400000,m32:1750636800000,
+  m33:1750658400000,m34:1750690800000,m35:1750697600000,m36:1750708800000,
+  m37:1750809600000,m38:1750809600000,m39:1750809600000,m40:1750823400000,
+  m41:1750888000000,m42:1750888000000,m43:1750900800000,m44:1750913400000,
+  m45:1750964400000,m46:1751000400000,m47:1751004000000,m48:1751008800000,
+  m49:1751008800000,m50:1751064000000,m51:1751064000000,m52:1751073000000,
+  m53:1751084400000,m54:1751084400000,
+  m55:1751752800000,m56:1751767200000,m57:1751839200000,m58:1751854800000,
+  m59:1751925600000,m60:1751941200000,m61:1752012000000,m62:1752026400000,
+  m63:1752098400000,m64:1752112800000,m65:1752184800000,m66:1752199200000,
+  m67:1752271200000,m68:1752285600000,m69:1752357600000,m70:1752372000000,
+  m71:1752530400000,m72:1752544800000,m73:1752616800000,m74:1752631200000,
+  m75:1752703200000,m76:1752717600000,m77:1752789600000,m78:1752804000000,
+  m79:1752962400000,m80:1752976800000,m81:1753048800000,m82:1753063200000,
+  m83:1753228800000,m84:1753315200000,m85:1753466400000,m86:1753552800000,
+};
+
 function randomCode(len = 7): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let out = "";
@@ -61,13 +87,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === "allbets") {
+        // Only expose bets for matches that have already kicked off — prevents peeking
+        const now = Date.now();
         const rows = await sql`
           SELECT player_name, match_id, home_score, away_score FROM bets WHERE pool_id = ${poolId}`;
         const all: AllBetsMap = {};
         rows.forEach(r => {
+          const matchId = r.match_id as string;
+          const kickoff = KICKOFFS[matchId];
+          if (kickoff && now < kickoff) return; // hide bets for future matches
           const name = r.player_name as string;
           if (!all[name]) all[name] = {};
-          all[name][r.match_id as string] = { h: r.home_score as number, a: r.away_score as number };
+          all[name][matchId] = { h: r.home_score as number, a: r.away_score as number };
         });
         return res.status(200).json({ bets: all });
       }
@@ -89,9 +120,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { action } = body as { action: string };
 
       if (action === "register") {
-        const { name } = body as { name: string };
-        await sql`INSERT INTO players (name) VALUES (${name}) ON CONFLICT (name) DO NOTHING`;
-        return res.status(200).json({ ok: true });
+        const { name, token } = body as { name: string; token: string };
+        if (!name || !token) return res.status(400).json({ error: "name and token required" });
+
+        const existing = await sql`SELECT token FROM players WHERE name = ${name}`;
+        if (existing.length) {
+          const stored = existing[0].token as string | null;
+          if (stored === null) {
+            // Legacy player with no token — claim it (one-time migration window)
+            await sql`UPDATE players SET token = ${token} WHERE name = ${name}`;
+            return res.status(200).json({ ok: true, token });
+          }
+          if (stored === token) return res.status(200).json({ ok: true, token });
+          return res.status(409).json({ error: "Name already taken — choose a different one" });
+        }
+
+        await sql`INSERT INTO players (name, token) VALUES (${name}, ${token})`;
+        return res.status(200).json({ ok: true, token });
       }
 
       if (action === "joinPool") {
@@ -100,7 +145,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const pools = await sql`SELECT id FROM pools WHERE invite_code = ${code}`;
         if (!pools.length) return res.status(404).json({ error: "Pool not found" });
         const poolId = pools[0].id as string;
-        await sql`INSERT INTO players (name) VALUES (${playerName}) ON CONFLICT (name) DO NOTHING`;
+        await sql`INSERT INTO players (name, token) VALUES (${playerName}, ${null}) ON CONFLICT (name) DO NOTHING`;
         await sql`INSERT INTO pool_members (pool_id, player_name) VALUES (${poolId}, ${playerName}) ON CONFLICT DO NOTHING`;
         return res.status(200).json({ ok: true });
       }
@@ -125,7 +170,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (action === "saveBet") {
-        const { poolId, playerName, matchId, h, a } = body as { poolId: string; playerName: string; matchId: string; h: number; a: number };
+        const { poolId, playerName, playerToken, matchId, h, a } =
+          body as { poolId: string; playerName: string; playerToken: string; matchId: string; h: number; a: number };
+
+        // Verify player token
+        const player = await sql`SELECT token FROM players WHERE name = ${playerName}`;
+        if (!player.length) return res.status(404).json({ error: "Player not found" });
+        if (player[0].token !== playerToken) return res.status(403).json({ error: "Invalid token — reload the app" });
+
+        // Server-side kickoff lock
+        const kickoff = KICKOFFS[matchId];
+        if (kickoff && Date.now() >= kickoff) {
+          return res.status(403).json({ error: "Predictions locked — match has started" });
+        }
+
         await sql`
           INSERT INTO bets (pool_id, player_name, match_id, home_score, away_score)
           VALUES (${poolId}, ${playerName}, ${matchId}, ${h}, ${a})
@@ -164,7 +222,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { name, adminCode } = body as { name: string; adminCode: string };
         const valid = await sql`SELECT value FROM site_config WHERE key = 'admin_code' AND value = ${adminCode}`;
         if (!valid.length) return res.status(403).json({ error: "Invalid admin code" });
-        await sql`INSERT INTO players (name) VALUES (${name}) ON CONFLICT (name) DO NOTHING`;
+        await sql`INSERT INTO players (name, token) VALUES (${name}, ${null}) ON CONFLICT (name) DO NOTHING`;
         await sql`INSERT INTO pool_creators (name) VALUES (${name}) ON CONFLICT (name) DO NOTHING`;
         return res.status(200).json({ ok: true });
       }

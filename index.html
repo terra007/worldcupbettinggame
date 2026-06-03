@@ -375,7 +375,7 @@ var MATCHES=[
 ].map(function(m){return {id:m[0],grp:m[1],h:m[2],a:m[3],kt:new Date(m[4]).getTime()};});
 
 /* ── App state ────────────────────────────────────────────── */
-var me=null, currentPool=null, orgUnlocked=false, orgCode="";
+var me=null, currentPool=null, orgUnlocked=false, orgCode="", myToken=null;
 var roster=[], myBets={}, results={}, allBets={};
 var myPools=[], creators=[], isCreator=false;
 var curTab="matches", grpFilter="ALL", hideStarted=false, teamFilter="";
@@ -393,6 +393,13 @@ function fmtTime(ts){return new Date(ts).toLocaleTimeString(undefined,{hour:"2-d
 function dayKey(ts){var d=new Date(ts);return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 var toastT;
+function genUUID(){
+  if(crypto.randomUUID) return crypto.randomUUID();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(c){
+    var r=crypto.getRandomValues(new Uint8Array(1))[0]%16;
+    return(c==="x"?r:(r&3|8)).toString(16);
+  });
+}
 function toast(msg){var t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove("show");},2200);}
 function scorePoints(bet,res){
   if(!bet||!res) return null;
@@ -406,11 +413,21 @@ function scorePoints(bet,res){
 async function init(){
   try{$("#tzName").textContent=Intl.DateTimeFormat().resolvedOptions().timeZone||"your local timezone";}catch(e){}
   me = await pget("me");
+  myToken = await pget("token");
   var urlPool = new URLSearchParams(window.location.search).get("p");
   if(!me){
     if(urlPool) pset("pendingPool", urlPool);
     showNameModal();
     return;
+  }
+  if(!myToken){
+    try{
+      var tok=genUUID();
+      var r=await apiPost({action:"register",name:me,token:tok});
+      myToken=r.token||tok; pset("token",myToken);
+    }catch(e){
+      if(e.message&&e.message.includes("taken")){me=null;pset("me",null);showNameModal();return;}
+    }
   }
   await route(urlPool);
 }
@@ -443,11 +460,16 @@ async function joinAs(name){
   var btn=$("#nameGo"); btn.disabled=true; btn.textContent="Joining…";
   try{
     me=name; pset("me",me);
-    await apiPost({action:"register", name:me});
+    var tok=genUUID();
+    var reg=await apiPost({action:"register",name:me,token:tok});
+    myToken=reg.token||tok; pset("token",myToken);
     $("#nameModal").classList.remove("show");
     var pending = await pget("pendingPool");
     pset("pendingPool",null);
     await route(pending);
+  }catch(e){
+    me=null; pset("me",null);
+    toast(e.message||"Couldn't join");
   }finally{
     btn.disabled=false; btn.textContent="Let me in →";
   }
@@ -743,7 +765,7 @@ function bindCards(root){
       try{
         myBets[id]={h:h,a:a};
         if(!allBets[me])allBets[me]={};allBets[me][id]={h:h,a:a};
-        await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,matchId:id,h:h,a:a});
+        await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,playerToken:myToken,matchId:id,h:h,a:a});
         btn.classList.add("saved"); btn.textContent="Saved ✓";
         toast("Prediction saved");
       }catch(e){
