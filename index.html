@@ -104,7 +104,10 @@
   .vs{font-family:var(--display);color:var(--mut2);font-size:13px;padding:0 2px}
   .betrow{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:13px}
   .score-in{width:54px;height:52px;text-align:center;font-family:var(--display);font-size:28px;color:var(--ink);
-    background:#071710;border:1.5px solid var(--line2);border-radius:12px;outline:none;transition:.15s}
+    background:#071710;border:1.5px solid var(--line2);border-radius:12px;outline:none;transition:.15s;
+    -moz-appearance:textfield;appearance:textfield}
+  .score-in::-webkit-outer-spin-button,.score-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .score-in::placeholder{color:var(--mut2)}
   .score-in:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(182,255,58,.15)}
   .score-in:disabled{opacity:.7;color:var(--mut)}
   .dash{color:var(--mut2);font-family:var(--display);font-size:22px}
@@ -118,11 +121,18 @@
   .pill.you{color:var(--ink)}
   .pill.final{color:var(--gold);border-color:rgba(255,210,60,.35)}
   .pts{font-family:var(--display);font-size:15px;padding:5px 12px;border-radius:8px}
-  .pts.p5{color:#06130d;background:var(--lime)}
-  .pts.p3{color:#06130d;background:var(--sky)}
-  .pts.p2{color:#06130d;background:var(--gold)}
+  .pts.p3{color:#06130d;background:var(--lime)}
+  .pts.p1{color:#06130d;background:var(--gold)}
   .pts.p0{color:var(--mut);border:1px solid var(--line)}
   .nobet{color:var(--mut2);font-size:12.5px;font-style:italic}
+  .pool-tips{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .tips-label{width:100%;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);font-weight:800;margin-bottom:2px}
+  .tip-chip{display:inline-flex;align-items:center;gap:5px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:12px}
+  .tip-chip.mine{border-color:var(--line2);background:var(--panel)}
+  .tip-chip .tip-nm{color:var(--mut);font-weight:700;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tip-chip .tip-sc{font-family:var(--display);font-size:13px}
+  .tip-chip .tip-no{color:var(--mut2)}
+  .tip-chip .pts{font-size:10px;padding:2px 6px}
 
   /* LEADERBOARD */
   .lb{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
@@ -312,7 +322,7 @@ var MATCHES=[
 
 /* ── App state ────────────────────────────────────────────── */
 var me=null, currentPool=null, orgUnlocked=false, orgCode="";
-var roster=[], myBets={}, results={};
+var roster=[], myBets={}, results={}, allBets={};
 var myPools=[], creators=[], isCreator=false;
 var curTab="matches", grpFilter="ALL", hideStarted=false;
 var cdInterval=null;
@@ -333,9 +343,8 @@ function toast(msg){var t=$("#toast");t.textContent=msg;t.classList.add("show");
 function scorePoints(bet,res){
   if(!bet||!res) return null;
   var bd=bet.h-bet.a, rd=res.h-res.a;
-  if(bet.h===res.h&&bet.a===res.a) return 5;
-  if(bd===rd) return 3;
-  if(Math.sign(bd)===Math.sign(rd)) return 2;
+  if(bet.h===res.h&&bet.a===res.a) return 3;
+  if(Math.sign(bd)===Math.sign(rd)) return 1;
   return 0;
 }
 
@@ -540,9 +549,10 @@ async function enterPool(){
   var loaded=await Promise.all([
     apiGet({action:"members",poolId:currentPool.id}).then(function(d){return d.players||[];}).catch(function(){return[];}),
     apiGet({action:"bets",poolId:currentPool.id,player:me}).then(function(d){return d.bets||{};}).catch(function(){return{};}),
-    apiGet({action:"results",poolId:currentPool.id}).then(function(d){return d.results||{};}).catch(function(){return{};})
+    apiGet({action:"results",poolId:currentPool.id}).then(function(d){return d.results||{};}).catch(function(){return{};}),
+    apiGet({action:"allbets",poolId:currentPool.id}).then(function(d){return d.bets||{};}).catch(function(){return{};})
   ]);
-  roster=loaded[0]; myBets=loaded[1]; results=loaded[2];
+  roster=loaded[0]; myBets=loaded[1]; results=loaded[2]; allBets=loaded[3];
   curTab="matches";
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("active",t.dataset.tab==="matches");});
   ["matches","board","rules","invite","org"].forEach(function(k){
@@ -619,9 +629,9 @@ function matchCard(m,now){
   if(open&&me){
     var bh=bet?bet.h:"",ba=bet?bet.a:"";
     h+='<div class="betrow">'+
-      '<input class="score-in" type="number" inputmode="numeric" min="0" max="99" data-side="h" value="'+bh+'">'+
+      '<input class="score-in" type="number" inputmode="numeric" min="0" max="99" placeholder="0" data-side="h" value="'+bh+'">'+
       '<span class="dash">:</span>'+
-      '<input class="score-in" type="number" inputmode="numeric" min="0" max="99" data-side="a" value="'+ba+'">'+
+      '<input class="score-in" type="number" inputmode="numeric" min="0" max="99" placeholder="0" data-side="a" value="'+ba+'">'+
       '<button class="save'+(bet?" saved":"")+'" data-save>'+(bet?"Saved ✓":"Save")+'</button></div>';
   } else if(open&&!me){
     h+='<div class="result-line"><span class="nobet">Pick a name to place your prediction.</span></div>';
@@ -635,6 +645,20 @@ function matchCard(m,now){
       if(p!==null){line+='<span class="pts p'+p+'">+'+p+'</span>';}
     }
     line+='</div>'; h+=line;
+    if(roster.length>1){
+      var tips='<div class="pool-tips"><span class="tips-label">Pool picks</span>';
+      roster.forEach(function(name){
+        var b=(name===me)?bet:((allBets[name]||{})[m.id]||null);
+        var isMine=(name===me);
+        tips+='<span class="tip-chip'+(isMine?' mine':'')+'">'+
+          '<span class="tip-nm">'+esc(isMine?'You':name)+'</span>'+
+          (b?'<span class="tip-sc">'+b.h+'–'+b.a+'</span>':'<span class="tip-no">—</span>');
+        if(b&&res){var tp=scorePoints(b,res);tips+='<span class="pts p'+tp+'">+'+tp+'</span>';}
+        tips+='</span>';
+      });
+      tips+='</div>';
+      h+=tips;
+    }
   }
   return h+'</div>';
 }
@@ -653,6 +677,7 @@ function bindCards(root){
       btn.disabled=true; btn.textContent="Saving…";
       try{
         myBets[id]={h:h,a:a};
+        if(!allBets[me])allBets[me]={};allBets[me][id]={h:h,a:a};
         await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,matchId:id,h:h,a:a});
         btn.classList.add("saved"); btn.textContent="Saved ✓";
         toast("Prediction saved");
@@ -673,7 +698,7 @@ async function renderBoard(){
     apiGet({action:"results",poolId:currentPool.id}).then(function(d){return d.results||{};}).catch(function(){return{};}),
     apiGet({action:"allbets",poolId:currentPool.id}).then(function(d){return d.bets||{};}).catch(function(){return{};})
   ]);
-  roster=loaded[0]; results=loaded[1]; var allBets=loaded[2];
+  roster=loaded[0]; results=loaded[1]; allBets=loaded[2];
   var resCount=Object.keys(results).length;
   if(!roster.length){v.innerHTML='<div class="empty"><div class="big">No players yet</div>Share the invite link.</div>';return;}
   var rows=[];
@@ -683,7 +708,7 @@ async function renderBoard(){
     MATCHES.forEach(function(m){
       if(results[m.id]&&bets[m.id]){
         var p=scorePoints(bets[m.id],results[m.id]);
-        pts+=p;if(p===5)exact++;played++;
+        pts+=p;if(p===3)exact++;played++;
       }
     });
     rows.push({name:name,pts:pts,exact:exact,played:played});
@@ -711,9 +736,8 @@ function renderRules(){
   $("#view-rules").innerHTML=
     '<div class="pnl"><h2>How <span class="em">points</span> work</h2>'+
     '<p>Predict the exact full-time score (90 min + stoppage, before extra time or penalties).</p>'+
-    '<div class="rule"><span class="b pts p5">+5</span><div class="t">Exact score <span>— e.g. you said 2–1 and it finished 2–1.</span></div></div>'+
-    '<div class="rule"><span class="b pts p3">+3</span><div class="t">Correct goal difference <span>— right margin & winner, e.g. 2–1 → 3–2.</span></div></div>'+
-    '<div class="rule"><span class="b pts p2">+2</span><div class="t">Correct tendency <span>— right winner (or draw) but wrong margin.</span></div></div>'+
+    '<div class="rule"><span class="b pts p3">+3</span><div class="t">Exact score <span>— e.g. you said 2–1 and it finished 2–1.</span></div></div>'+
+    '<div class="rule"><span class="b pts p1">+1</span><div class="t">Correct result <span>— right winner or draw, wrong score.</span></div></div>'+
     '<div class="rule"><span class="b pts p0">+0</span><div class="t">Wrong outcome <span>— better luck next match.</span></div></div>'+
     '</div>'+
     '<div class="pnl"><h2>The <span class="em">rules</span></h2>'+
