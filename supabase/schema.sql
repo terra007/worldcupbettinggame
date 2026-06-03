@@ -42,6 +42,14 @@ create table if not exists bets (
   primary key (pool_id, player_name, match_id)
 );
 
+create table if not exists match_names (
+  pool_id  text not null references pools(id) on delete cascade,
+  match_id text not null,
+  home     text not null,
+  away     text not null,
+  primary key (pool_id, match_id)
+);
+
 create table if not exists results (
   pool_id    text not null references pools(id) on delete cascade,
   match_id   text not null,

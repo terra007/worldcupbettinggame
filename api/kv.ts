@@ -103,6 +103,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ bets: all });
       }
 
+      if (action === "matchNames") {
+        const rows = await sql`
+          SELECT match_id, home, away FROM match_names WHERE pool_id = ${poolId}`;
+        const names: Record<string, {h: string; a: string}> = {};
+        rows.forEach(r => { names[r.match_id as string] = { h: r.home as string, a: r.away as string }; });
+        return res.status(200).json({ names });
+      }
+
       if (action === "results") {
         const rows = await sql`
           SELECT match_id, home_score, away_score FROM results WHERE pool_id = ${poolId}`;
@@ -189,6 +197,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           VALUES (${poolId}, ${playerName}, ${matchId}, ${h}, ${a})
           ON CONFLICT (pool_id, player_name, match_id)
           DO UPDATE SET home_score = ${h}, away_score = ${a}`;
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "saveMatchName") {
+        const { poolId, matchId, home, away, code } = body as { poolId: string; matchId: string; home: string; away: string; code: string };
+        const ok = await sql`SELECT id FROM pools WHERE id = ${poolId} AND organizer_code = ${code}`;
+        if (!ok.length) return res.status(403).json({ error: "Wrong organizer code" });
+        await sql`
+          INSERT INTO match_names (pool_id, match_id, home, away)
+          VALUES (${poolId}, ${matchId}, ${home}, ${away})
+          ON CONFLICT (pool_id, match_id)
+          DO UPDATE SET home = ${home}, away = ${away}`;
         return res.status(200).json({ ok: true });
       }
 

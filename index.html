@@ -192,6 +192,9 @@
   .team-search{width:100%;box-sizing:border-box;background:#071710;border:1.5px solid var(--line2);border-radius:10px;color:var(--ink);font-family:var(--body);font-size:13px;font-weight:700;padding:9px 13px;outline:none;transition:.15s}
   .team-search:focus{border-color:var(--lime)}
   .team-search::placeholder{color:var(--mut2)}
+  .ko-row{display:flex;align-items:center;gap:7px;padding:8px 0;border-top:1px solid var(--line)}
+  .ko-row .txt{height:38px;padding:6px 10px;font-size:13px}
+  .ko-row .btn{height:38px;padding:0 14px;font-size:12px}
   .mypicks-summary{display:flex;gap:10px;margin-bottom:18px}
   .mps-item{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 10px;text-align:center;flex:1;min-width:0}
   .mps-val{font-family:var(--display);font-size:26px;color:var(--lime)}
@@ -376,7 +379,7 @@ var MATCHES=[
 
 /* ── App state ────────────────────────────────────────────── */
 var me=null, currentPool=null, orgUnlocked=false, orgCode="", myToken=null;
-var roster=[], myBets={}, results={}, allBets={};
+var roster=[], myBets={}, results={}, allBets={}, matchOverrides={};
 var myPools=[], creators=[], isCreator=false;
 var curTab="matches", grpFilter="ALL", hideStarted=false, teamFilter="";
 var cdInterval=null;
@@ -393,6 +396,7 @@ function fmtTime(ts){return new Date(ts).toLocaleTimeString(undefined,{hour:"2-d
 function dayKey(ts){var d=new Date(ts);return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 var toastT;
+function rn(m,s){return (matchOverrides[m.id]||{})[s]||m[s];}
 function genUUID(){
   if(crypto.randomUUID) return crypto.randomUUID();
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(c){
@@ -626,9 +630,10 @@ async function enterPool(){
     apiGet({action:"members",poolId:currentPool.id}).then(function(d){return d.players||[];}).catch(function(){return[];}),
     apiGet({action:"bets",poolId:currentPool.id,player:me}).then(function(d){return d.bets||{};}).catch(function(){return{};}),
     apiGet({action:"results",poolId:currentPool.id}).then(function(d){return d.results||{};}).catch(function(){return{};}),
-    apiGet({action:"allbets",poolId:currentPool.id}).then(function(d){return d.bets||{};}).catch(function(){return{};})
+    apiGet({action:"allbets",poolId:currentPool.id}).then(function(d){return d.bets||{};}).catch(function(){return{};}),
+    apiGet({action:"matchNames",poolId:currentPool.id}).then(function(d){return d.names||{};}).catch(function(){return{};})
   ]);
-  roster=loaded[0]; myBets=loaded[1]; results=loaded[2]; allBets=loaded[3];
+  roster=loaded[0]; myBets=loaded[1]; results=loaded[2]; allBets=loaded[3]; matchOverrides=loaded[4];
   renderMeBar();
   curTab="matches";
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("active",t.dataset.tab==="matches");});
@@ -710,9 +715,9 @@ function matchCard(m,now){
   h+='<div class="meta"><span class="gbadge">'+m.grp+'</span><span class="time">'+fmtTime(m.kt)+'</span>'+
     '<span class="status '+sCls+'">'+sTxt+'</span></div>';
   h+='<div class="match">'+
-    '<div class="team home"><span class="flag">'+fl(m.h)+'</span><span class="tname">'+esc(m.h)+'</span></div>'+
+    '<div class="team home"><span class="flag">'+fl(rn(m,'h'))+'</span><span class="tname">'+esc(rn(m,'h'))+'</span></div>'+
     '<div class="vs">VS</div>'+
-    '<div class="team away"><span class="flag">'+fl(m.a)+'</span><span class="tname">'+esc(m.a)+'</span></div></div>';
+    '<div class="team away"><span class="flag">'+fl(rn(m,'a'))+'</span><span class="tname">'+esc(rn(m,'a'))+'</span></div></div>';
   if(open&&me){
     var bh=bet?bet.h:"",ba=bet?bet.a:"";
     h+='<div class="betrow">'+
@@ -849,9 +854,9 @@ function renderMyPicks(){
     var dk=dayKey(c.m.kt);
     if(dk!==lastDay){html+='<div class="day-h">'+fmtDay(c.m.kt)+'</div>';lastDay=dk;}
     html+='<div class="mypick-card">'+
-      '<div class="mpc-teams">'+fl(c.m.h)+'<span class="mpc-name">'+esc(c.m.h)+'</span>'+
+      '<div class="mpc-teams">'+fl(rn(c.m,'h'))+'<span class="mpc-name">'+esc(rn(c.m,'h'))+'</span>'+
       '<span class="mpc-vs">VS</span>'+
-      '<span class="mpc-name">'+esc(c.m.a)+'</span>'+fl(c.m.a)+'</div>'+
+      '<span class="mpc-name">'+esc(rn(c.m,'a'))+'</span>'+fl(rn(c.m,'a'))+'</div>'+
       '<div class="mpc-row">';
     if(c.bet){html+='<span class="pill you"><span class="lab">Your pick</span>'+esc(c.bet.h)+'–'+esc(c.bet.a)+'</span>';}
     else{html+='<span class="nobet">No pick</span>';}
@@ -928,7 +933,21 @@ function renderOrg(){
     return;
   }
   var now=Date.now();
-  var html='<div class="pnl"><h2>Log <span class="em">results</span></h2>'+
+  var KO_GROUPS=["R32","R16","QF","SF","3P","FIN"];
+  var koMatches=MATCHES.filter(function(m){return KO_GROUPS.indexOf(m.grp)!==-1;});
+  var html='<div class="pnl"><h2>Knockout <span class="em">teams</span></h2>'+
+    '<p>Update team names once the bracket is decided — changes appear instantly for all players.</p>';
+  koMatches.forEach(function(m){
+    html+='<div class="ko-row" data-ko="'+m.id+'">'+
+      '<span class="gbadge" style="flex:0 0 auto">'+m.grp+'</span>'+
+      '<input class="txt ko-h" value="'+esc(rn(m,'h'))+'" placeholder="Home team" style="flex:1;min-width:80px">'+
+      '<span style="color:var(--mut);font-weight:800;padding:0 4px">vs</span>'+
+      '<input class="txt ko-a" value="'+esc(rn(m,'a'))+'" placeholder="Away team" style="flex:1;min-width:80px">'+
+      '<button class="btn ko-save" style="flex:0 0 auto">Set</button>'+
+      '</div>';
+  });
+  html+='</div>';
+  html+='<div class="pnl"><h2>Log <span class="em">results</span></h2>'+
     '<p>Enter final scores. Saving updates the leaderboard for everyone in this pool.</p></div>';
   var lastDay="";
   MATCHES.forEach(function(m){
@@ -939,9 +958,9 @@ function renderOrg(){
       '<div class="meta"><span class="gbadge">'+m.grp+'</span><span class="time">'+fmtTime(m.kt)+'</span>'+
       (r?'<span class="status done">Logged</span>':(started?'<span class="status live">Awaiting</span>':'<span class="status locked">Upcoming</span>'))+'</div>'+
       '<div class="match">'+
-      '<div class="team home"><span class="flag">'+fl(m.h)+'</span><span class="tname">'+esc(m.h)+'</span></div>'+
+      '<div class="team home"><span class="flag">'+fl(rn(m,'h'))+'</span><span class="tname">'+esc(rn(m,'h'))+'</span></div>'+
       '<div class="vs">VS</div>'+
-      '<div class="team away"><span class="flag">'+fl(m.a)+'</span><span class="tname">'+esc(m.a)+'</span></div></div>'+
+      '<div class="team away"><span class="flag">'+fl(rn(m,'a'))+'</span><span class="tname">'+esc(rn(m,'a'))+'</span></div></div>'+
       '<div class="betrow">'+
       '<input class="score-in" type="number" inputmode="numeric" min="0" max="99" data-rs="h" value="'+(r?r.h:"")+'">'+
       '<span class="dash">:</span>'+
@@ -951,6 +970,23 @@ function renderOrg(){
       '</div></div>';
   });
   v.innerHTML=html;
+  v.querySelectorAll(".ko-row").forEach(function(row){
+    var id=row.getAttribute("data-ko");
+    var btn=row.querySelector(".ko-save");
+    btn.onclick=async function(){
+      var h=(row.querySelector(".ko-h").value||"").trim();
+      var a=(row.querySelector(".ko-a").value||"").trim();
+      if(!h||!a){toast("Enter both team names");return;}
+      btn.disabled=true; btn.textContent="Saving…";
+      try{
+        await apiPost({action:"saveMatchName",poolId:currentPool.id,matchId:id,home:h,away:a,code:orgCode});
+        if(!matchOverrides[id])matchOverrides[id]={};
+        matchOverrides[id].h=h; matchOverrides[id].a=a;
+        btn.textContent="Saved ✓"; toast("Teams updated");
+      }catch(e){toast(e.message||"Couldn't save");btn.textContent="Set";}
+      finally{btn.disabled=false;}
+    };
+  });
   v.querySelectorAll(".card").forEach(function(card){
     var id=card.getAttribute("data-rid");
     var sBtn=card.querySelector("[data-rsave]");
