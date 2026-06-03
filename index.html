@@ -553,6 +553,7 @@ async function enterPool(){
     apiGet({action:"allbets",poolId:currentPool.id}).then(function(d){return d.bets||{};}).catch(function(){return{};})
   ]);
   roster=loaded[0]; myBets=loaded[1]; results=loaded[2]; allBets=loaded[3];
+  renderMeBar();
   curTab="matches";
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("active",t.dataset.tab==="matches");});
   ["matches","board","rules","invite","org"].forEach(function(k){
