@@ -188,6 +188,20 @@
   .empty{text-align:center;color:var(--mut);padding:40px 10px;font-size:14px}
   .empty .big{font-family:var(--display);font-size:30px;color:var(--mut2);margin-bottom:8px;letter-spacing:.04em}
   .foot{text-align:center;color:var(--mut2);font-size:11px;margin-top:24px;line-height:1.6}
+  .team-search-wrap{margin-bottom:14px}
+  .team-search{width:100%;box-sizing:border-box;background:#071710;border:1.5px solid var(--line2);border-radius:10px;color:var(--ink);font-family:var(--body);font-size:13px;font-weight:700;padding:9px 13px;outline:none;transition:.15s}
+  .team-search:focus{border-color:var(--lime)}
+  .team-search::placeholder{color:var(--mut2)}
+  .mypicks-summary{display:flex;gap:10px;margin-bottom:18px}
+  .mps-item{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 10px;text-align:center;flex:1;min-width:0}
+  .mps-val{font-family:var(--display);font-size:26px;color:var(--lime)}
+  .mps-lab{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--mut);font-weight:800;margin-top:3px}
+  .mypick-card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;margin-bottom:8px}
+  .mpc-teams{display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-wrap:wrap}
+  .mpc-name{font-weight:800;font-size:14px;line-height:1.1}
+  .mpc-vs{color:var(--mut2);font-size:11px;font-family:var(--display);padding:0 2px}
+  .mpc-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .mpc-pending{color:var(--mut);font-size:12px;font-style:italic}
 </style>
 </head>
 <body>
@@ -214,12 +228,14 @@
     <button class="back-btn" id="backBtn">← All pools</button>
     <nav class="tabs" id="tabs">
       <button class="tab active" data-tab="matches">Matches</button>
+      <button class="tab" data-tab="mypicks">My Picks</button>
       <button class="tab" data-tab="board">Leaderboard</button>
       <button class="tab" data-tab="rules">How it works</button>
       <button class="tab" data-tab="invite">Invite</button>
       <button class="tab" data-tab="org">Organizer</button>
     </nav>
     <section id="view-matches"></section>
+    <section id="view-mypicks" style="display:none"></section>
     <section id="view-board" style="display:none"></section>
     <section id="view-rules" style="display:none"></section>
     <section id="view-invite" style="display:none"></section>
@@ -324,7 +340,7 @@ var MATCHES=[
 var me=null, currentPool=null, orgUnlocked=false, orgCode="";
 var roster=[], myBets={}, results={}, allBets={};
 var myPools=[], creators=[], isCreator=false;
-var curTab="matches", grpFilter="ALL", hideStarted=false;
+var curTab="matches", grpFilter="ALL", hideStarted=false, teamFilter="";
 var cdInterval=null;
 
 /* ── Helpers ──────────────────────────────────────────────── */
@@ -556,7 +572,7 @@ async function enterPool(){
   renderMeBar();
   curTab="matches";
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("active",t.dataset.tab==="matches");});
-  ["matches","board","rules","invite","org"].forEach(function(k){
+  ["matches","mypicks","board","rules","invite","org"].forEach(function(k){
     $("#view-"+k).style.display=(k==="matches")?"block":"none";
   });
   renderMatches();
@@ -596,9 +612,12 @@ function renderMatches(){
   var html='<div class="filters">';
   groups.forEach(function(g){html+='<button class="chip'+(grpFilter===g?" active":"")+'" data-g="'+g+'">'+(g==="ALL"?"All":"Grp "+g)+'</button>';});
   html+='<label class="toggle"><input type="checkbox" id="hideChk"'+(hideStarted?" checked":"")+'> hide started</label></div>';
+  html+='<div class="team-search-wrap"><input class="team-search" type="text" placeholder="Search team…" value="'+esc(teamFilter)+'"></div>';
+  var tf=teamFilter.toLowerCase();
   var list=MATCHES.filter(function(m){
     if(grpFilter!=="ALL"&&m.grp!==grpFilter) return false;
     if(hideStarted&&m.kt<=now) return false;
+    if(tf&&!m.h.toLowerCase().includes(tf)&&!m.a.toLowerCase().includes(tf)) return false;
     return true;
   });
   if(!list.length){html+='<div class="empty"><div class="big">Nothing here</div>No matches match this filter.</div>';}
@@ -611,6 +630,7 @@ function renderMatches(){
   v.innerHTML=html;
   v.querySelectorAll(".chip").forEach(function(c){c.onclick=function(){grpFilter=c.getAttribute("data-g");renderMatches();};});
   var hc=$("#hideChk");if(hc)hc.onchange=function(){hideStarted=hc.checked;renderMatches();};
+  var ts=v.querySelector(".team-search");if(ts)ts.oninput=function(){teamFilter=ts.value;renderMatches();};
   bindCards(v);
 }
 
@@ -729,6 +749,54 @@ async function renderBoard(){
       '<div class="lb-pts">'+r.pts+'</div></div>';
   });
   html+='</div><div class="hint" style="text-align:center">'+resCount+' of '+MATCHES.length+' matches have results.</div>';
+  v.innerHTML=html;
+}
+
+/* ── My Picks ─────────────────────────────────────────────── */
+function renderMyPicks(){
+  var v=$("#view-mypicks");
+  if(!me){
+    v.innerHTML='<div class="empty"><div class="big">No name set</div>Pick a name first to see your predictions.</div>';
+    return;
+  }
+  var totalPts=0,exact=0,played=0;
+  var cards=[];
+  MATCHES.forEach(function(m){
+    var bet=myBets[m.id],res=results[m.id];
+    if(!bet&&!res) return;
+    var p=null;
+    if(bet&&res){p=scorePoints(bet,res);totalPts+=p;if(p===3)exact++;played++;}
+    cards.push({m:m,bet:bet,res:res,p:p});
+  });
+  var html='';
+  html+='<div class="mypicks-summary">'+
+    '<div class="mps-item"><div class="mps-val">'+totalPts+'</div><div class="mps-lab">Points</div></div>'+
+    '<div class="mps-item"><div class="mps-val">'+exact+'</div><div class="mps-lab">Exact</div></div>'+
+    '<div class="mps-item"><div class="mps-val">'+played+' / '+cards.length+'</div><div class="mps-lab">Played</div></div>'+
+    '</div>';
+  if(!cards.length){
+    html+='<div class="empty"><div class="big">Nothing yet</div>Place your first prediction on the Matches tab.</div>';
+    v.innerHTML=html; return;
+  }
+  var lastDay='';
+  cards.forEach(function(c){
+    var dk=dayKey(c.m.kt);
+    if(dk!==lastDay){html+='<div class="day-h">'+fmtDay(c.m.kt)+'</div>';lastDay=dk;}
+    html+='<div class="mypick-card">'+
+      '<div class="mpc-teams">'+fl(c.m.h)+'<span class="mpc-name">'+esc(c.m.h)+'</span>'+
+      '<span class="mpc-vs">VS</span>'+
+      '<span class="mpc-name">'+esc(c.m.a)+'</span>'+fl(c.m.a)+'</div>'+
+      '<div class="mpc-row">';
+    if(c.bet){html+='<span class="pill you"><span class="lab">Your pick</span>'+c.bet.h+'–'+c.bet.a+'</span>';}
+    else{html+='<span class="nobet">No pick</span>';}
+    if(c.res){
+      html+='<span class="pill final"><span class="lab">Result</span>'+c.res.h+'–'+c.res.a+'</span>';
+      if(c.p!==null) html+='<span class="pts p'+c.p+'">+'+c.p+'</span>';
+    } else {
+      html+='<span class="mpc-pending">Pending</span>';
+    }
+    html+='</div></div>';
+  });
   v.innerHTML=html;
 }
 
@@ -853,10 +921,11 @@ $("#tabs").addEventListener("click",function(e){
   var b=e.target.closest(".tab");if(!b)return;
   curTab=b.getAttribute("data-tab");
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("active",t===b);});
-  ["matches","board","rules","invite","org"].forEach(function(k){
+  ["matches","mypicks","board","rules","invite","org"].forEach(function(k){
     $("#view-"+k).style.display=(k===curTab)?"block":"none";
   });
   if(curTab==="matches") renderMatches();
+  if(curTab==="mypicks") renderMyPicks();
   if(curTab==="board") renderBoard();
   if(curTab==="rules") renderRules();
   if(curTab==="invite") renderInvite();
