@@ -333,7 +333,45 @@ var MATCHES=[
   ["m51","L","Croatia","Ghana","2026-06-27T21:00:00Z"],
   ["m52","K","Colombia","Portugal","2026-06-27T23:30:00Z"],
   ["m53","J","Algeria","Austria","2026-06-28T03:00:00Z"],
-  ["m54","J","Jordan","Argentina","2026-06-28T03:00:00Z"]
+  ["m54","J","Jordan","Argentina","2026-06-28T03:00:00Z"],
+  // Round of 32
+  ["m55","R32","1A","2B","2026-07-04T22:00:00Z"],
+  ["m56","R32","1C","2D","2026-07-05T02:00:00Z"],
+  ["m57","R32","1E","2F","2026-07-05T22:00:00Z"],
+  ["m58","R32","1G","2H","2026-07-06T02:00:00Z"],
+  ["m59","R32","1I","2J","2026-07-06T22:00:00Z"],
+  ["m60","R32","1K","2L","2026-07-07T02:00:00Z"],
+  ["m61","R32","2A","1B","2026-07-07T22:00:00Z"],
+  ["m62","R32","2C","1D","2026-07-08T02:00:00Z"],
+  ["m63","R32","2E","1F","2026-07-08T22:00:00Z"],
+  ["m64","R32","2G","1H","2026-07-09T02:00:00Z"],
+  ["m65","R32","2I","1J","2026-07-09T22:00:00Z"],
+  ["m66","R32","2K","1L","2026-07-10T02:00:00Z"],
+  ["m67","R32","3rd-1","3rd-2","2026-07-10T22:00:00Z"],
+  ["m68","R32","3rd-3","3rd-4","2026-07-11T02:00:00Z"],
+  ["m69","R32","3rd-5","3rd-6","2026-07-11T22:00:00Z"],
+  ["m70","R32","3rd-7","3rd-8","2026-07-12T02:00:00Z"],
+  // Round of 16
+  ["m71","R16","W55","W56","2026-07-13T22:00:00Z"],
+  ["m72","R16","W57","W58","2026-07-14T02:00:00Z"],
+  ["m73","R16","W59","W60","2026-07-14T22:00:00Z"],
+  ["m74","R16","W61","W62","2026-07-15T02:00:00Z"],
+  ["m75","R16","W63","W64","2026-07-15T22:00:00Z"],
+  ["m76","R16","W65","W66","2026-07-16T02:00:00Z"],
+  ["m77","R16","W67","W68","2026-07-16T22:00:00Z"],
+  ["m78","R16","W69","W70","2026-07-17T02:00:00Z"],
+  // Quarter-finals
+  ["m79","QF","W71","W72","2026-07-18T22:00:00Z"],
+  ["m80","QF","W73","W74","2026-07-19T02:00:00Z"],
+  ["m81","QF","W75","W76","2026-07-19T22:00:00Z"],
+  ["m82","QF","W77","W78","2026-07-20T02:00:00Z"],
+  // Semi-finals
+  ["m83","SF","W79","W80","2026-07-22T23:00:00Z"],
+  ["m84","SF","W81","W82","2026-07-23T23:00:00Z"],
+  // Third-place play-off
+  ["m85","3P","L83","L84","2026-07-25T19:00:00Z"],
+  // Final
+  ["m86","F","W83","W84","2026-07-26T20:00:00Z"]
 ].map(function(m){return {id:m[0],grp:m[1],h:m[2],a:m[3],kt:new Date(m[4]).getTime()};});
 
 /* ── App state ────────────────────────────────────────────── */
@@ -552,7 +590,7 @@ function renderAdminUnlocked(adminCode){
 
 /* ── Enter pool ───────────────────────────────────────────── */
 async function enterPool(){
-  orgUnlocked=false; orgCode=""; roster=[]; myBets={}; results={};
+  orgUnlocked=false; orgCode=""; roster=[]; myBets={}; results={}; teamFilter="";
   clearInterval(cdInterval);
   $("#view-lobby").style.display="none";
   $("#view-pool").style.display="block";
@@ -608,9 +646,11 @@ function tickCountdown(){
 /* ── Matches ──────────────────────────────────────────────── */
 function renderMatches(){
   var v=$("#view-matches"),now=Date.now();
-  var groups=["ALL","A","B","C","D","E","F","G","H","I","J","K","L"];
+  var hadSearchFocus=document.activeElement&&document.activeElement.classList.contains("team-search");
+  var groups=["ALL","A","B","C","D","E","F","G","H","I","J","K","L","R32","R16","QF","SF","3P","F"];
   var html='<div class="filters">';
-  groups.forEach(function(g){html+='<button class="chip'+(grpFilter===g?" active":"")+'" data-g="'+g+'">'+(g==="ALL"?"All":"Grp "+g)+'</button>';});
+  var KO={"R32":"R32","R16":"R16","QF":"QF","SF":"SF","3P":"3rd","F":"Final"};
+  groups.forEach(function(g){html+='<button class="chip'+(grpFilter===g?" active":"")+'" data-g="'+g+'">'+(g==="ALL"?"All":(KO[g]||"Grp "+g))+'</button>';});
   html+='<label class="toggle"><input type="checkbox" id="hideChk"'+(hideStarted?" checked":"")+'> hide started</label></div>';
   html+='<div class="team-search-wrap"><input class="team-search" type="text" placeholder="Search team…" value="'+esc(teamFilter)+'"></div>';
   var tf=teamFilter.toLowerCase();
@@ -630,7 +670,11 @@ function renderMatches(){
   v.innerHTML=html;
   v.querySelectorAll(".chip").forEach(function(c){c.onclick=function(){grpFilter=c.getAttribute("data-g");renderMatches();};});
   var hc=$("#hideChk");if(hc)hc.onchange=function(){hideStarted=hc.checked;renderMatches();};
-  var ts=v.querySelector(".team-search");if(ts)ts.oninput=function(){teamFilter=ts.value;renderMatches();};
+  var ts=v.querySelector(".team-search");
+  if(ts){
+    ts.oninput=function(){teamFilter=ts.value;renderMatches();};
+    if(hadSearchFocus){ts.focus();ts.setSelectionRange(ts.value.length,ts.value.length);}
+  }
   bindCards(v);
 }
 
@@ -673,7 +717,7 @@ function matchCard(m,now){
         var isMine=(name===me);
         tips+='<span class="tip-chip'+(isMine?' mine':'')+'">'+
           '<span class="tip-nm">'+esc(isMine?'You':name)+'</span>'+
-          (b?'<span class="tip-sc">'+b.h+'–'+b.a+'</span>':'<span class="tip-no">—</span>');
+          (b?'<span class="tip-sc">'+esc(b.h)+'–'+esc(b.a)+'</span>':'<span class="tip-no">—</span>');
         if(b&&res){var tp=scorePoints(b,res);tips+='<span class="pts p'+tp+'">+'+tp+'</span>';}
         tips+='</span>';
       });
@@ -772,7 +816,7 @@ function renderMyPicks(){
   html+='<div class="mypicks-summary">'+
     '<div class="mps-item"><div class="mps-val">'+totalPts+'</div><div class="mps-lab">Points</div></div>'+
     '<div class="mps-item"><div class="mps-val">'+exact+'</div><div class="mps-lab">Exact</div></div>'+
-    '<div class="mps-item"><div class="mps-val">'+played+' / '+cards.length+'</div><div class="mps-lab">Played</div></div>'+
+    '<div class="mps-item"><div class="mps-val">'+played+' / '+Object.keys(myBets).length+'</div><div class="mps-lab">Scored / Picks</div></div>'+
     '</div>';
   if(!cards.length){
     html+='<div class="empty"><div class="big">Nothing yet</div>Place your first prediction on the Matches tab.</div>';
@@ -787,10 +831,10 @@ function renderMyPicks(){
       '<span class="mpc-vs">VS</span>'+
       '<span class="mpc-name">'+esc(c.m.a)+'</span>'+fl(c.m.a)+'</div>'+
       '<div class="mpc-row">';
-    if(c.bet){html+='<span class="pill you"><span class="lab">Your pick</span>'+c.bet.h+'–'+c.bet.a+'</span>';}
+    if(c.bet){html+='<span class="pill you"><span class="lab">Your pick</span>'+esc(c.bet.h)+'–'+esc(c.bet.a)+'</span>';}
     else{html+='<span class="nobet">No pick</span>';}
     if(c.res){
-      html+='<span class="pill final"><span class="lab">Result</span>'+c.res.h+'–'+c.res.a+'</span>';
+      html+='<span class="pill final"><span class="lab">Result</span>'+esc(c.res.h)+'–'+esc(c.res.a)+'</span>';
       if(c.p!==null) html+='<span class="pts p'+c.p+'">+'+c.p+'</span>';
     } else {
       html+='<span class="mpc-pending">Pending</span>';
