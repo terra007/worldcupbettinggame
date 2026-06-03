@@ -1,5 +1,5 @@
-const CACHE = 'wc2026-v1';
-const PRECACHE = ['/', '/manifest.json', '/icon.svg'];
+const CACHE = 'wc2026-v2';
+const PRECACHE = ['/', '/manifest.json', '/icon.svg', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -18,10 +18,44 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Never intercept API calls — they must always be fresh
   if (event.request.url.includes('/api/')) return;
   if (event.request.method !== 'GET') return;
 
+  // Network-first for HTML navigation — ensures users always get fresh app code
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(res => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE).then(c => c.put(event.request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache-first for Google Fonts (immutable after first load)
+  if (
+    event.request.url.includes('fonts.googleapis.com') ||
+    event.request.url.includes('fonts.gstatic.com')
+  ) {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(event.request, clone));
+          return res;
+        });
+      })
+    );
+    return;
+  }
+
+  // Stale-while-revalidate for all other static assets
   event.respondWith(
     caches.match(event.request).then(cached => {
       const network = fetch(event.request).then(res => {
@@ -31,7 +65,6 @@ self.addEventListener('fetch', event => {
         }
         return res;
       }).catch(() => cached);
-      // Serve cache instantly, update in background (stale-while-revalidate)
       return cached || network;
     })
   );
