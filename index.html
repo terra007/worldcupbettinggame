@@ -264,8 +264,10 @@
 <div class="modal" id="nameModal">
   <div class="box">
     <h3 id="modalH3">POOL <span class="em">BEITRETEN</span></h3>
-    <p id="modalP">Wähle den Namen, den deine Freunde kennen. <b>Du kannst ihn nach dem Beitreten nicht mehr ändern</b> — wähle sorgfältig.</p>
-    <input class="txt" id="nameInput" placeholder="z.B. Max" maxlength="22" autocomplete="off">
+    <p id="modalP">Wähle einen Namen und ein Passwort. Damit kannst du dich von jedem Gerät anmelden.</p>
+    <input class="txt" id="nameInput" placeholder="z.B. Max" maxlength="22" autocomplete="username">
+    <div class="gap"></div>
+    <input class="txt" id="pwInput" type="password" placeholder="Passwort" maxlength="40" autocomplete="current-password">
     <div class="gap"></div><div class="gap"></div>
     <button class="btn" id="nameGo" style="width:100%">Weiter →</button>
   </div>
@@ -292,8 +294,11 @@ de:{
   tz_default:"Lokale Zeitzone",
   tz_foot:"Anstoßzeiten in {{tz}}. Tipps werden bei Spielbeginn gesperrt.",
   modal_h3:"POOL {em}BEITRETEN{/em}",
-  modal_p:"Wähle den Namen, den deine Freunde kennen. <b>Du kannst ihn nach dem Beitreten nicht mehr ändern</b> — wähle sorgfältig.",
+  modal_h3_relogin:"ERNEUT {em}ANMELDEN{/em}",
+  modal_p:"Wähle einen Namen und ein Passwort. Damit kannst du dich von jedem Gerät anmelden.",
+  modal_p_relogin:"Deine Sitzung ist abgelaufen. Bitte Passwort eingeben.",
   name_ph:"z.B. Max",
+  pw_ph:"Passwort",
   let_me_in:"Weiter →",
   joining_lbl:"Beitreten…",
   creating_lbl:"Erstellen…",
@@ -383,7 +388,7 @@ de:{
   invite_h:"Einladen zu",
   invite_p:"Teile den Link oder Code — wer ihn öffnet, tritt dem Pool automatisch bei.",
   copy_btn:"Kopieren",
-  no_account:"Kein Konto erforderlich — nur der Link.",
+  no_account:"Link öffnen und in Sekunden registrieren.",
   invite_msg:"{{pool}} beitreten! Tippe WM 2026 Ergebnisse und tritt gegen andere an: {{url}}",
   invite_subject:"{{pool}} beitreten",
   whatsapp_lbl:"WhatsApp",
@@ -421,6 +426,7 @@ de:{
   toast_enter_both_scores:"Beide Ergebnisse eingeben",
   toast_couldnt_save:"Konnte nicht speichern — Verbindung prüfen",
   toast_couldnt_save_set:"Konnte nicht speichern",
+  toast_session_expired:"Sitzung abgelaufen — bitte neu anmelden",
   toast_enter_both_teams:"Beide Teamnamen eingeben",
   toast_teams_updated:"Teams aktualisiert",
   toast_result_saved:"Ergebnis gespeichert — Rangliste aktualisiert",
@@ -430,6 +436,8 @@ de:{
   toast_link_copied:"Link kopiert",
   toast_copy_manual:"Manuell auswählen und kopieren",
   err_name_taken:"Name bereits vergeben — wähle einen anderen",
+  err_wrong_pw:"Falsches Passwort — bitte erneut versuchen",
+  err_pw_required:"Passwort erforderlich",
   err_not_allowed:"Keine Berechtigung zum Erstellen von Pools",
   err_locked:"Tipps gesperrt — Spiel hat begonnen",
   err_wrong_org:"Falscher Organisator-Code",
@@ -449,8 +457,11 @@ en:{
   tz_default:"your local timezone",
   tz_foot:"Kickoff times in {{tz}}. Predictions lock at kickoff.",
   modal_h3:"JOIN THE {em}POOL{/em}",
-  modal_p:"Pick the name your friends will recognise. <b>You can't change it after joining</b> — choose carefully.",
+  modal_h3_relogin:"SIGN {em}IN{/em}",
+  modal_p:"Choose a name and password — use them to sign in from any device.",
+  modal_p_relogin:"Your session has expired. Please enter your password.",
   name_ph:"e.g. Max",
+  pw_ph:"Password",
   let_me_in:"Let me in →",
   joining_lbl:"Joining…",
   creating_lbl:"Creating…",
@@ -540,7 +551,7 @@ en:{
   invite_h:"Invite to",
   invite_p:"Share the link or code — anyone who opens it joins this pool automatically.",
   copy_btn:"Copy",
-  no_account:"No account needed — just the link.",
+  no_account:"Open the link and register in seconds.",
   invite_msg:"Join {{pool}}! Predict World Cup 2026 scores and compete: {{url}}",
   invite_subject:"Join {{pool}}",
   whatsapp_lbl:"WhatsApp",
@@ -578,6 +589,7 @@ en:{
   toast_enter_both_scores:"Enter both scores",
   toast_couldnt_save:"Couldn't save — check connection",
   toast_couldnt_save_set:"Couldn't save",
+  toast_session_expired:"Session expired — please sign in again",
   toast_enter_both_teams:"Enter both team names",
   toast_teams_updated:"Teams updated",
   toast_result_saved:"Result saved — board updated",
@@ -587,6 +599,8 @@ en:{
   toast_link_copied:"Link copied",
   toast_copy_manual:"Select & copy manually",
   err_name_taken:"Name already taken — choose a different one",
+  err_wrong_pw:"Wrong password — please try again",
+  err_pw_required:"Password required",
   err_not_allowed:"Not allowed to create pools",
   err_locked:"Predictions locked — match has started",
   err_wrong_org:"Wrong organizer code",
@@ -611,6 +625,8 @@ function th(k,vars){
 
 var ERR_MAP={
   "Name already taken — choose a different one":"err_name_taken",
+  "Wrong password — try again":"err_wrong_pw",
+  "Password required":"err_pw_required",
   "Not allowed to create pools":"err_not_allowed",
   "Predictions locked — match has started":"err_locked",
   "Wrong organizer code":"err_wrong_org",
@@ -795,6 +811,7 @@ function applyStaticLang(){
   var ng=$("#nameGo");
   if(ng&&!ng.disabled) ng.textContent=t("let_me_in");
   $("#nameInput").placeholder=t("name_ph");
+  $("#pwInput").placeholder=t("pw_ph");
   $("#modalH3").innerHTML=th("modal_h3");
   $("#modalP").innerHTML=t("modal_p");
   updateTabLabels();
@@ -836,19 +853,10 @@ async function init(){
   me=await pget("me");
   myToken=await pget("token");
   var urlPool=new URLSearchParams(window.location.search).get("p");
-  if(!me){
+  if(!me||!myToken){
     if(urlPool) pset("pendingPool",urlPool);
-    showNameModal();
+    showNameModal(me||"");
     return;
-  }
-  if(!myToken){
-    try{
-      var tok=genUUID();
-      var r=await apiPost({action:"register",name:me,token:tok});
-      myToken=r.token||tok; pset("token",myToken);
-    }catch(e){
-      if(e.message&&e.message.includes("taken")){me=null;pset("me",null);showNameModal();return;}
-    }
   }
   await route(urlPool);
 }
@@ -871,32 +879,43 @@ async function route(poolCode){
 }
 
 /* ── Name modal ───────────────────────────────────────────── */
-function showNameModal(){
+function showNameModal(prefill,relogin){
   var m=$("#nameModal"); m.classList.add("show");
-  $("#nameInput").value="";
-  setTimeout(function(){$("#nameInput").focus();},50);
+  $("#nameInput").value=prefill||"";
+  $("#pwInput").value="";
+  if(relogin){
+    $("#modalH3").innerHTML=th("modal_h3_relogin");
+    $("#modalP").innerHTML=t("modal_p_relogin");
+  } else {
+    $("#modalH3").innerHTML=th("modal_h3");
+    $("#modalP").innerHTML=t("modal_p");
+  }
+  setTimeout(function(){$(prefill?"#pwInput":"#nameInput").focus();},50);
 }
-async function joinAs(name){
-  name=(name||"").trim(); if(!name){$("#nameInput").focus();return;}
+async function joinAs(name,password){
+  name=(name||"").trim();
+  password=(password||"").trim();
+  if(!name){$("#nameInput").focus();return;}
+  if(!password){$("#pwInput").focus();return;}
   var btn=$("#nameGo"); btn.disabled=true; btn.textContent=t("joining_lbl");
   try{
-    me=name; pset("me",me);
     var tok=genUUID();
-    var reg=await apiPost({action:"register",name:me,token:tok});
+    var reg=await apiPost({action:"register",name:name,password:password,token:tok});
+    me=name; pset("me",me);
     myToken=reg.token||tok; pset("token",myToken);
     $("#nameModal").classList.remove("show");
     var pending=await pget("pendingPool");
     pset("pendingPool",null);
     await route(pending);
   }catch(e){
-    me=null; pset("me",null);
     toast(errMsg(e)||t("toast_couldnt_join"));
   }finally{
     btn.disabled=false; btn.textContent=t("let_me_in");
   }
 }
-$("#nameGo").onclick=function(){joinAs($("#nameInput").value);};
-$("#nameInput").addEventListener("keydown",function(e){if(e.key==="Enter")joinAs(this.value);});
+$("#nameGo").onclick=function(){joinAs($("#nameInput").value,$("#pwInput").value);};
+$("#nameInput").addEventListener("keydown",function(e){if(e.key==="Enter")$("#pwInput").focus();});
+$("#pwInput").addEventListener("keydown",function(e){if(e.key==="Enter")joinAs($("#nameInput").value,this.value);});
 
 /* ── Lobby ────────────────────────────────────────────────── */
 async function showLobby(){
@@ -1189,38 +1208,22 @@ function bindCards(root){
       var prev=myBets[id];
       myBets[id]={h:h,a:a};
       if(!allBets[me])allBets[me]={};allBets[me][id]={h:h,a:a};
-      var saved=false, saveErr=null;
       try{
-        try{
-          await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,playerToken:myToken,matchId:id,h:h,a:a});
-          saved=true;
-        }catch(e){
-          var tokenErr=e.message&&(e.message.includes("Invalid token")||e.message.includes("Player not found"));
-          if(tokenErr){
-            // Token is stale or player missing — re-register then retry once
-            pset("token",null); myToken=null;
-            var tok=genUUID();
-            var reg=await apiPost({action:"register",name:me,token:tok});
-            myToken=reg.token||tok; pset("token",myToken);
-            await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,playerToken:myToken,matchId:id,h:h,a:a});
-            saved=true;
-          } else {
-            throw e;
-          }
-        }
-      }catch(err){saveErr=err;}
-      finally{
-        btn.disabled=false;
-        if(saved){
-          btn.classList.add("saved"); btn.textContent=t("saved_btn");
-          toast(t("toast_prediction_saved"));
+        await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,playerToken:myToken,matchId:id,h:h,a:a});
+        btn.classList.add("saved"); btn.textContent=t("saved_btn");
+        toast(t("toast_prediction_saved"));
+      }catch(e){
+        if(prev) myBets[id]=prev; else delete myBets[id];
+        if(allBets[me]) delete allBets[me][id];
+        btn.textContent=t("save_btn");
+        if(e.message&&(e.message.includes("Invalid token")||e.message.includes("Player not found"))){
+          pset("token",null); myToken=null;
+          toast(t("toast_session_expired"));
+          showNameModal(me||"",true);
         } else {
-          if(prev) myBets[id]=prev; else delete myBets[id];
-          if(allBets[me]) delete allBets[me][id];
-          btn.textContent=t("save_btn");
-          toast(errMsg(saveErr)||t("toast_couldnt_save"));
+          toast(errMsg(e)||t("toast_couldnt_save"));
         }
-      }
+      }finally{btn.disabled=false;}
     };
   });
 }

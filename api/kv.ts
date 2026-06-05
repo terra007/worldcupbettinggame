@@ -1,6 +1,10 @@
 import { neon } from "@neondatabase/serverless";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+
+function hashPassword(name: string, password: string): string {
+  return createHash("sha256").update(name.toLowerCase() + ":" + password + ":wm2026").digest("hex");
+}
 
 const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null;
 
@@ -128,22 +132,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { action } = body as { action: string };
 
       if (action === "register") {
-        const { name, token } = body as { name: string; token: string };
-        if (!name || !token) return res.status(400).json({ error: "name and token required" });
+        const { name, password, token } = body as { name: string; password: string; token: string };
+        if (!name || !token) return res.status(400).json({ error: "Name and token required" });
+        if (!password) return res.status(400).json({ error: "Password required" });
 
-        const existing = await sql`SELECT token FROM players WHERE name = ${name}`;
-        if (existing.length) {
-          const stored = existing[0].token as string | null;
-          if (stored === null) {
-            // Legacy player with no token — claim it (one-time migration window)
-            await sql`UPDATE players SET token = ${token} WHERE name = ${name}`;
-            return res.status(200).json({ ok: true, token });
-          }
-          if (stored === token) return res.status(200).json({ ok: true, token });
-          return res.status(409).json({ error: "Name already taken — choose a different one" });
+        const hash = hashPassword(name, password);
+        const existing = await sql`SELECT token, password_hash FROM players WHERE name = ${name}`;
+
+        if (!existing.length) {
+          // New player — register with password
+          await sql`INSERT INTO players (name, token, password_hash) VALUES (${name}, ${token}, ${hash})`;
+          return res.status(200).json({ ok: true, token });
         }
 
-        await sql`INSERT INTO players (name, token) VALUES (${name}, ${token})`;
+        const storedHash = existing[0].password_hash as string | null;
+        if (storedHash === null) {
+          // Legacy player without a password — let them claim the account
+          await sql`UPDATE players SET token = ${token}, password_hash = ${hash} WHERE name = ${name}`;
+          return res.status(200).json({ ok: true, token });
+        }
+
+        if (storedHash !== hash) {
+          return res.status(403).json({ error: "Wrong password — try again" });
+        }
+
+        // Correct password — issue a fresh session token
+        await sql`UPDATE players SET token = ${token} WHERE name = ${name}`;
         return res.status(200).json({ ok: true, token });
       }
 

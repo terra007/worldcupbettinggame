@@ -12,10 +12,13 @@ create table if not exists pool_creators (
 );
 
 create table if not exists players (
-  name      text primary key,
-  token     text unique,
-  joined_at timestamptz not null default now()
+  name          text primary key,
+  token         text unique,
+  password_hash text,
+  joined_at     timestamptz not null default now()
 );
+-- For existing databases run once:
+-- ALTER TABLE players ADD COLUMN IF NOT EXISTS password_hash text;
 
 create table if not exists pools (
   id             text primary key,
