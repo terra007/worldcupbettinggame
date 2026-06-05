@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#06130d">
-<meta name="description" content="World Cup 2026 prediction pool">
+<meta name="description" content="WM 2026 Tipp-Pool">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="WC26 Pool">
+<meta name="apple-mobile-web-app-title" content="WM26 Pool">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon.svg">
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
-<title>World Cup 2026 Pool</title>
+<title>WM 2026 Tipp-Pool</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -42,6 +42,7 @@
 
   /* HEADER */
   header{padding:26px 0 14px}
+  .header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
   .kicker{font-family:var(--body);font-weight:800;letter-spacing:.32em;font-size:11px;color:var(--lime);text-transform:uppercase}
   h1{font-family:var(--display);font-size:clamp(40px,11vw,76px);line-height:.86;letter-spacing:.01em;text-transform:uppercase;margin:6px 0 2px}
   h1 .pop{color:var(--lime)}
@@ -50,6 +51,12 @@
   .me-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--mut)}
   .me-chip{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);padding:6px 12px;border-radius:999px;color:var(--ink);font-weight:700}
   .me-chip b{color:var(--lime)}
+
+  /* LANG SWITCHER */
+  .lang-sw{display:flex;gap:4px;align-items:center;flex-shrink:0}
+  .lang-btn{background:none;border:1px solid var(--line);color:var(--mut);font-family:var(--body);font-weight:800;font-size:11px;letter-spacing:.1em;padding:4px 9px;border-radius:999px;cursor:pointer;transition:.15s;touch-action:manipulation}
+  .lang-btn.active{background:var(--lime);color:#06130d;border-color:var(--lime)}
+  .lang-btn:hover:not(.active){color:var(--ink);border-color:var(--line2)}
 
   .countdown{margin-top:14px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel2),var(--panel));border-radius:var(--r);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
   .countdown .lab{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--mut);font-weight:800}
@@ -211,12 +218,18 @@
 
 <div class="wrap">
   <header>
-    <div class="kicker">FIFA World Cup · USA · Canada · Mexico</div>
-    <h1>WORLD CUP <span class="pop">2026</span><br>BETTING POOL</h1>
-    <div class="poolname" id="poolName"><span>Pools:</span> World Cup 2026</div>
+    <div class="header-top">
+      <div class="kicker" id="kicker">FIFA Weltmeisterschaft · USA · Kanada · Mexiko</div>
+      <div class="lang-sw">
+        <button class="lang-btn active" id="langDe">DE</button>
+        <button class="lang-btn" id="langEn">EN</button>
+      </div>
+    </div>
+    <h1 id="h1main">WORLD CUP <span class="pop">2026</span><br>TIPP-POOL</h1>
+    <div class="poolname" id="poolName"><span id="poolsLbl">Pools:</span> World Cup 2026</div>
     <div class="me-bar" id="meBar"></div>
     <div class="countdown" id="cd" style="display:none">
-      <div><div class="lab">Kickoff countdown · next match</div><div class="nm" id="cdName">—</div></div>
+      <div><div class="lab" id="cdLab">Anstoß-Countdown · nächstes Spiel</div><div class="nm" id="cdName">—</div></div>
       <div class="clk" id="cdClock">--:--:--</div>
     </div>
   </header>
@@ -228,14 +241,14 @@
 
   <!-- POOL -->
   <div id="view-pool" style="display:none">
-    <button class="back-btn" id="backBtn">← All pools</button>
+    <button class="back-btn" id="backBtn">← Alle Pools</button>
     <nav class="tabs" id="tabs">
-      <button class="tab active" data-tab="matches">Matches</button>
-      <button class="tab" data-tab="mypicks">My Picks</button>
-      <button class="tab" data-tab="board">Leaderboard</button>
-      <button class="tab" data-tab="rules">How it works</button>
-      <button class="tab" data-tab="invite">Invite</button>
-      <button class="tab" data-tab="org">Organizer</button>
+      <button class="tab active" data-tab="matches">Spiele</button>
+      <button class="tab" data-tab="mypicks">Meine Tipps</button>
+      <button class="tab" data-tab="board">Rangliste</button>
+      <button class="tab" data-tab="rules">Regeln</button>
+      <button class="tab" data-tab="invite">Einladen</button>
+      <button class="tab" data-tab="org">Organisator</button>
     </nav>
     <section id="view-matches"></section>
     <section id="view-mypicks" style="display:none"></section>
@@ -245,16 +258,16 @@
     <section id="view-org" style="display:none"></section>
   </div>
 
-  <div class="foot" id="foot" style="display:none">Kickoff times in <b id="tzName">your local timezone</b>. Predictions lock at kickoff.</div>
+  <div class="foot" id="foot" style="display:none"></div>
 </div>
 
 <div class="modal" id="nameModal">
   <div class="box">
-    <h3>Join the <span class="em">pool</span></h3>
-    <p>Pick the name your friends will recognise. <b>You can't change it after joining</b> — choose carefully.</p>
-    <input class="txt" id="nameInput" placeholder="e.g. Max" maxlength="22" autocomplete="off">
+    <h3 id="modalH3">POOL <span class="em">BEITRETEN</span></h3>
+    <p id="modalP">Wähle den Namen, den deine Freunde kennen. <b>Du kannst ihn nach dem Beitreten nicht mehr ändern</b> — wähle sorgfältig.</p>
+    <input class="txt" id="nameInput" placeholder="z.B. Max" maxlength="22" autocomplete="off">
     <div class="gap"></div><div class="gap"></div>
-    <button class="btn" id="nameGo" style="width:100%">Let me in →</button>
+    <button class="btn" id="nameGo" style="width:100%">Weiter →</button>
   </div>
 </div>
 
@@ -264,8 +277,356 @@
 (function(){
 "use strict";
 
+/* ── Translations ─────────────────────────────────────────── */
+var lang;
+try{lang=JSON.parse(localStorage.getItem("wm26_lang"))||"de";}catch(e){lang="de";}
+
+var LANG={
+de:{
+  title:"WM 2026 Tipp-Pool",
+  kicker:"FIFA Weltmeisterschaft · USA · Kanada · Mexiko",
+  h1_line2:"TIPP-POOL",
+  pools_prefix:"Pools:",
+  pool_prefix:"Pool:",
+  cd_lab:"Anstoß-Countdown · nächstes Spiel",
+  tz_default:"Lokale Zeitzone",
+  tz_foot:"Anstoßzeiten in {{tz}}. Tipps werden bei Spielbeginn gesperrt.",
+  modal_h3:"POOL {em}BEITRETEN{/em}",
+  modal_p:"Wähle den Namen, den deine Freunde kennen. <b>Du kannst ihn nach dem Beitreten nicht mehr ändern</b> — wähle sorgfältig.",
+  name_ph:"z.B. Max",
+  let_me_in:"Weiter →",
+  joining_lbl:"Beitreten…",
+  creating_lbl:"Erstellen…",
+  tab_matches:"Spiele",
+  tab_mypicks:"Meine Tipps",
+  tab_board:"Rangliste",
+  tab_rules:"Regeln",
+  tab_invite:"Einladen",
+  tab_org:"Organisator",
+  back_btn:"← Alle Pools",
+  playing_as:"Spielend als",
+  players_in_pool:"Spieler im Pool",
+  player_in_pool:"Spieler im Pool",
+  your_pools:"Deine Pools",
+  no_pools_big:"Noch keine Pools",
+  no_pools_sub:"Tritt einem Pool bei oder erstelle deinen eigenen.",
+  h2_join_pool:"Pool {em}beitreten{/em}",
+  join_pool_p:"Hast du einen Einladungslink? Der Code ist der Teil nach <b>?p=</b> in der URL.",
+  join_code_ph:"Code eingeben, z.B. ABC1234",
+  join_btn:"Beitreten",
+  h2_create_pool:"Pool {em}erstellen{/em}",
+  pool_name_ph:"Pool-Name",
+  org_code_ph:"Geheimer Organisator-Code (nur du kennst ihn)",
+  create_pool_btn:"Pool erstellen",
+  h2_admin:"Admin-{em}Panel{/em}",
+  admin_panel_p:"Pool-Erstellungsrechte für andere Spieler vergeben oder entziehen.",
+  unlock_admin_btn:"Mit Admin-Code entsperren",
+  admin_code_ph:"Admin-Code",
+  unlock_btn:"Entsperren",
+  player_name_ph:"Spielername",
+  grant_btn:"Vergeben",
+  revoke_btn:"Entziehen",
+  current_creators:"Aktuelle Ersteller: ",
+  all_filter:"Alle",
+  grp_prefix:"Gr. ",
+  ko_R32:"R32",ko_R16:"R16",ko_QF:"VF",ko_SF:"HF",ko_3P:"3.",ko_FIN:"Finale",
+  hide_started:"gestartete ausblenden",
+  search_team_ph:"Team suchen…",
+  nothing_here_big:"Nichts hier",
+  nothing_here_sub:"Keine Spiele passen zu diesem Filter.",
+  status_final:"Abgeschlossen",
+  status_open:"Offen",
+  status_live:"Gestartet",
+  status_locked:"Gesperrt",
+  your_tip_lab:"Dein Tipp",
+  result_lab:"Ergebnis",
+  pool_picks_lab:"Pool-Tipps",
+  you_lbl:"Du",
+  pick_name_notice:"Wähle einen Namen, um deinen Tipp abzugeben.",
+  no_prediction:"Kein Tipp",
+  save_btn:"Speichern",
+  saved_btn:"Gespeichert ✓",
+  saving_btn:"Speichern…",
+  loading_big:"Lädt…",
+  tallying:"Tipps werden gezählt.",
+  no_players_big:"Noch keine Spieler",
+  share_invite:"Teile den Einladungslink.",
+  lb_player:"Spieler",
+  lb_exact:"Exakt",
+  lb_pts:"Pts",
+  you_marker:"DU",
+  matches_have_results:"{{count}} von {{total}} Spielen haben Ergebnisse.",
+  h2_kickoff_pending:"Anstoß {em}ausstehend{/em}",
+  kickoff_pending_p:"Noch keine Ergebnisse — die Rangliste wird aktualisiert, sobald der Organisator ein Ergebnis einträgt.",
+  no_name_big:"Kein Name gesetzt",
+  no_name_sub:"Wähle zuerst einen Namen, um deine Tipps zu sehen.",
+  nothing_yet_big:"Noch nichts",
+  nothing_yet_sub:'Gib deinen ersten Tipp im Reiter "Spiele" ab.',
+  pts_lab:"Punkte",
+  exact_lab:"Exakt",
+  scored_picks_lab:"Gewertet / Tipps",
+  your_pick_lab:"Dein Tipp",
+  no_pick:"Kein Tipp",
+  pending_lbl:"Ausstehend",
+  h2_how_points:"Wie {em}Punkte{/em} funktionieren",
+  rules_pts_p:"Tippe das genaue Endergebnis (90 Min. + Nachspielzeit, ohne Verlängerung oder Elfmeter).",
+  rule_exact_main:"Exaktes Ergebnis",
+  rule_exact_sub:"— z.B. du tippst 2–1 und es endet 2–1.",
+  rule_correct_main:"Richtiges Resultat",
+  rule_correct_sub:"— richtiger Gewinner oder Unentschieden, falsches Ergebnis.",
+  rule_wrong_main:"Falsches Resultat",
+  rule_wrong_sub:"— beim nächsten Spiel mehr Glück.",
+  h2_the_rules:"Die {em}Regeln{/em}",
+  rule_lockin:"<b>Abgabeschluss:</b> Tipps schließen beim Anstoß. Frühzeitig abgeben.",
+  rule_edit:"<b>Bearbeiten:</b> Tipp jederzeit vor dem Anstoß ändern — nur die letzte Speicherung zählt.",
+  rule_tiebreak:"<b>Gleichstand:</b> gleiche Punkte? Wer mehr exakte Ergebnisse hat, gewinnt.",
+  invite_h:"Einladen zu",
+  invite_p:"Teile den Link oder Code — wer ihn öffnet, tritt dem Pool automatisch bei.",
+  copy_btn:"Kopieren",
+  no_account:"Kein Konto erforderlich — nur der Link.",
+  invite_msg:"{{pool}} beitreten! Tippe WM 2026 Ergebnisse und tritt gegen andere an: {{url}}",
+  invite_subject:"{{pool}} beitreten",
+  whatsapp_lbl:"WhatsApp",
+  email_lbl:"E-Mail",
+  h2_org_login:"Organisator-{em}Login{/em}",
+  org_login_p:"Gib den Organisator-Code ein, um Ergebnisse für diesen Pool einzutragen oder zu bearbeiten.",
+  org_code_input_ph:"Organisator-Code",
+  org_not_org:'Nicht der Organisator? Gib deine Tipps im Reiter "Spiele" ab.',
+  h2_ko_teams:"K.O.-{em}Teams{/em}",
+  ko_teams_p:"Teamnamen aktualisieren, sobald die K.O.-Runde feststeht — Änderungen sind sofort für alle sichtbar.",
+  home_team_ph:"Heimteam",
+  away_team_ph:"Gastteam",
+  set_btn:"Setzen",
+  saving_lbl:"Speichern…",
+  h2_log_results:"{em}Ergebnisse{/em} eintragen",
+  log_results_p:"Endstände eingeben. Speichern aktualisiert die Rangliste für alle im Pool.",
+  status_logged:"Eingetragen",
+  status_awaiting:"Ausstehend",
+  status_upcoming:"Bevorstehend",
+  log_btn:"Eintragen",
+  logged_btn:"Eingetragen ✓",
+  clear_btn:"Löschen",
+  toast_enter_code:"Code eingeben",
+  toast_pool_not_found:"Pool nicht gefunden",
+  toast_joined:"{{name}} beigetreten!",
+  toast_couldnt_join:"Beitreten fehlgeschlagen",
+  toast_fill_both:"Beide Felder ausfüllen",
+  toast_couldnt_create:"Pool erstellen fehlgeschlagen",
+  toast_wrong_admin:"Falscher Admin-Code",
+  toast_granted:"Vergeben: {{name}}",
+  toast_revoked:"Entzogen: {{name}}",
+  toast_pool_created:"Pool erstellt! Code: {{code}}",
+  toast_couldnt_load:"Pool laden fehlgeschlagen",
+  toast_prediction_saved:"Tipp gespeichert",
+  toast_enter_both_scores:"Beide Ergebnisse eingeben",
+  toast_couldnt_save:"Konnte nicht speichern — Verbindung prüfen",
+  toast_couldnt_save_set:"Konnte nicht speichern",
+  toast_enter_both_teams:"Beide Teamnamen eingeben",
+  toast_teams_updated:"Teams aktualisiert",
+  toast_result_saved:"Ergebnis gespeichert — Rangliste aktualisiert",
+  toast_cleared:"Gelöscht",
+  toast_unlocked:"Entsperrt",
+  toast_wrong_code:"Falscher Code",
+  toast_link_copied:"Link kopiert",
+  toast_copy_manual:"Manuell auswählen und kopieren",
+  err_name_taken:"Name bereits vergeben — wähle einen anderen",
+  err_not_allowed:"Keine Berechtigung zum Erstellen von Pools",
+  err_locked:"Tipps gesperrt — Spiel hat begonnen",
+  err_wrong_org:"Falscher Organisator-Code",
+  err_pool_nf:"Pool nicht gefunden",
+  err_player_nf:"Spieler nicht gefunden",
+  err_invalid_token:"Ungültiges Token — App neu laden",
+  err_invalid_admin:"Ungültiger Admin-Code",
+  err_cannot_revoke:"Kann Max nicht entziehen"
+},
+en:{
+  title:"World Cup 2026 Pool",
+  kicker:"FIFA World Cup · USA · Canada · Mexico",
+  h1_line2:"BETTING POOL",
+  pools_prefix:"Pools:",
+  pool_prefix:"Pool:",
+  cd_lab:"Kickoff countdown · next match",
+  tz_default:"your local timezone",
+  tz_foot:"Kickoff times in {{tz}}. Predictions lock at kickoff.",
+  modal_h3:"JOIN THE {em}POOL{/em}",
+  modal_p:"Pick the name your friends will recognise. <b>You can't change it after joining</b> — choose carefully.",
+  name_ph:"e.g. Max",
+  let_me_in:"Let me in →",
+  joining_lbl:"Joining…",
+  creating_lbl:"Creating…",
+  tab_matches:"Matches",
+  tab_mypicks:"My Picks",
+  tab_board:"Leaderboard",
+  tab_rules:"How it works",
+  tab_invite:"Invite",
+  tab_org:"Organizer",
+  back_btn:"← All pools",
+  playing_as:"Playing as",
+  players_in_pool:"players in pool",
+  player_in_pool:"player in pool",
+  your_pools:"Your pools",
+  no_pools_big:"No pools yet",
+  no_pools_sub:"Join one below or create your own.",
+  h2_join_pool:"Join a {em}pool{/em}",
+  join_pool_p:"Got an invite link? The code is the part after <b>?p=</b> in the URL.",
+  join_code_ph:"Enter code e.g. ABC1234",
+  join_btn:"Join",
+  h2_create_pool:"Create a {em}pool{/em}",
+  pool_name_ph:"Pool name",
+  org_code_ph:"Organizer secret code (only you know this)",
+  create_pool_btn:"Create pool",
+  h2_admin:"Admin {em}panel{/em}",
+  admin_panel_p:"Grant or revoke pool-creation rights for other players.",
+  unlock_admin_btn:"Unlock with admin code",
+  admin_code_ph:"Admin code",
+  unlock_btn:"Unlock",
+  player_name_ph:"Player name",
+  grant_btn:"Grant",
+  revoke_btn:"Revoke",
+  current_creators:"Current creators: ",
+  all_filter:"All",
+  grp_prefix:"Grp ",
+  ko_R32:"R32",ko_R16:"R16",ko_QF:"QF",ko_SF:"SF",ko_3P:"3rd",ko_FIN:"Final",
+  hide_started:"hide started",
+  search_team_ph:"Search team…",
+  nothing_here_big:"Nothing here",
+  nothing_here_sub:"No matches match this filter.",
+  status_final:"Final",
+  status_open:"Open",
+  status_live:"Kicked off",
+  status_locked:"Locked",
+  your_tip_lab:"Your tip",
+  result_lab:"Result",
+  pool_picks_lab:"Pool picks",
+  you_lbl:"You",
+  pick_name_notice:"Pick a name to place your prediction.",
+  no_prediction:"No prediction",
+  save_btn:"Save",
+  saved_btn:"Saved ✓",
+  saving_btn:"Saving…",
+  loading_big:"Loading…",
+  tallying:"Tallying predictions.",
+  no_players_big:"No players yet",
+  share_invite:"Share the invite link.",
+  lb_player:"Player",
+  lb_exact:"Exact",
+  lb_pts:"Pts",
+  you_marker:"YOU",
+  matches_have_results:"{{count}} of {{total}} matches have results.",
+  h2_kickoff_pending:"{em}Kickoff{/em} pending",
+  kickoff_pending_p:"No results yet — standings update the moment the organizer logs a score.",
+  no_name_big:"No name set",
+  no_name_sub:"Pick a name first to see your predictions.",
+  nothing_yet_big:"Nothing yet",
+  nothing_yet_sub:"Place your first prediction on the Matches tab.",
+  pts_lab:"Points",
+  exact_lab:"Exact",
+  scored_picks_lab:"Scored / Picks",
+  your_pick_lab:"Your pick",
+  no_pick:"No pick",
+  pending_lbl:"Pending",
+  h2_how_points:"How {em}points{/em} work",
+  rules_pts_p:"Predict the exact full-time score (90 min + stoppage, before extra time or penalties).",
+  rule_exact_main:"Exact score",
+  rule_exact_sub:"— e.g. you said 2–1 and it finished 2–1.",
+  rule_correct_main:"Correct result",
+  rule_correct_sub:"— right winner or draw, wrong score.",
+  rule_wrong_main:"Wrong outcome",
+  rule_wrong_sub:"— better luck next match.",
+  h2_the_rules:"The {em}rules{/em}",
+  rule_lockin:"<b>Lock-in:</b> predictions close at kickoff. Submit early.",
+  rule_edit:"<b>Editing:</b> change your tip any time before kickoff — only the last save counts.",
+  rule_tiebreak:"<b>Tie-break:</b> level on points? Most exact scorelines wins.",
+  invite_h:"Invite to",
+  invite_p:"Share the link or code — anyone who opens it joins this pool automatically.",
+  copy_btn:"Copy",
+  no_account:"No account needed — just the link.",
+  invite_msg:"Join {{pool}}! Predict World Cup 2026 scores and compete: {{url}}",
+  invite_subject:"Join {{pool}}",
+  whatsapp_lbl:"WhatsApp",
+  email_lbl:"Email",
+  h2_org_login:"Organizer {em}login{/em}",
+  org_login_p:"Enter the organizer code to log or edit results for this pool.",
+  org_code_input_ph:"Organizer code",
+  org_not_org:"Not the organizer? Just make your predictions in the Matches tab.",
+  h2_ko_teams:"Knockout {em}teams{/em}",
+  ko_teams_p:"Update team names once the bracket is decided — changes appear instantly for all players.",
+  home_team_ph:"Home team",
+  away_team_ph:"Away team",
+  set_btn:"Set",
+  saving_lbl:"Saving…",
+  h2_log_results:"Log {em}results{/em}",
+  log_results_p:"Enter final scores. Saving updates the leaderboard for everyone in this pool.",
+  status_logged:"Logged",
+  status_awaiting:"Awaiting",
+  status_upcoming:"Upcoming",
+  log_btn:"Log",
+  logged_btn:"Logged ✓",
+  clear_btn:"Clear",
+  toast_enter_code:"Enter a code",
+  toast_pool_not_found:"Pool not found",
+  toast_joined:"Joined {{name}}!",
+  toast_couldnt_join:"Couldn't join",
+  toast_fill_both:"Fill in both fields",
+  toast_couldnt_create:"Couldn't create pool",
+  toast_wrong_admin:"Wrong admin code",
+  toast_granted:"Granted: {{name}}",
+  toast_revoked:"Revoked: {{name}}",
+  toast_pool_created:"Pool created! Code: {{code}}",
+  toast_couldnt_load:"Couldn't load pool",
+  toast_prediction_saved:"Prediction saved",
+  toast_enter_both_scores:"Enter both scores",
+  toast_couldnt_save:"Couldn't save — check connection",
+  toast_couldnt_save_set:"Couldn't save",
+  toast_enter_both_teams:"Enter both team names",
+  toast_teams_updated:"Teams updated",
+  toast_result_saved:"Result saved — board updated",
+  toast_cleared:"Cleared",
+  toast_unlocked:"Unlocked",
+  toast_wrong_code:"Wrong code",
+  toast_link_copied:"Link copied",
+  toast_copy_manual:"Select & copy manually",
+  err_name_taken:"Name already taken — choose a different one",
+  err_not_allowed:"Not allowed to create pools",
+  err_locked:"Predictions locked — match has started",
+  err_wrong_org:"Wrong organizer code",
+  err_pool_nf:"Pool not found",
+  err_player_nf:"Player not found",
+  err_invalid_token:"Invalid token — reload the app",
+  err_invalid_admin:"Invalid admin code",
+  err_cannot_revoke:"Cannot revoke Max"
+}
+};
+
+function t(k,vars){
+  var s=(LANG[lang]||LANG.de)[k];
+  if(s===undefined) s=(LANG.de)[k];
+  if(s===undefined) s=k;
+  if(vars) Object.keys(vars).forEach(function(vk){s=s.replace("{{"+vk+"}}",vars[vk]);});
+  return s;
+}
+function th(k,vars){
+  return t(k,vars).replace(/\{em\}(.*?)\{\/em\}/g,'<span class="em">$1</span>');
+}
+
+var ERR_MAP={
+  "Name already taken — choose a different one":"err_name_taken",
+  "Not allowed to create pools":"err_not_allowed",
+  "Predictions locked — match has started":"err_locked",
+  "Wrong organizer code":"err_wrong_org",
+  "Pool not found":"err_pool_nf",
+  "Player not found":"err_player_nf",
+  "Invalid token — reload the app":"err_invalid_token",
+  "Invalid admin code":"err_invalid_admin",
+  "Cannot revoke Max":"err_cannot_revoke"
+};
+function errMsg(e){
+  var msg=e&&e.message?e.message:String(e);
+  return ERR_MAP[msg]?t(ERR_MAP[msg]):msg;
+}
+
 /* ── API helpers ──────────────────────────────────────────── */
-var API = "/api/kv";
+var API="/api/kv";
 async function apiGet(p){
   var qs=Object.entries(p).map(function(e){return e[0]+"="+encodeURIComponent(e[1]);}).join("&");
   var r=await fetch(API+"?"+qs,{cache:"no-store"});
@@ -337,7 +698,6 @@ var MATCHES=[
   ["m52","K","Colombia","Portugal","2026-06-27T23:30:00Z"],
   ["m53","J","Algeria","Austria","2026-06-28T03:00:00Z"],
   ["m54","J","Jordan","Argentina","2026-06-28T03:00:00Z"],
-  // Round of 32
   ["m55","R32","1A","2B","2026-07-04T22:00:00Z"],
   ["m56","R32","1C","2D","2026-07-05T02:00:00Z"],
   ["m57","R32","1E","2F","2026-07-05T22:00:00Z"],
@@ -354,7 +714,6 @@ var MATCHES=[
   ["m68","R32","3rd-3","3rd-4","2026-07-11T02:00:00Z"],
   ["m69","R32","3rd-5","3rd-6","2026-07-11T22:00:00Z"],
   ["m70","R32","3rd-7","3rd-8","2026-07-12T02:00:00Z"],
-  // Round of 16
   ["m71","R16","W55","W56","2026-07-13T22:00:00Z"],
   ["m72","R16","W57","W58","2026-07-14T02:00:00Z"],
   ["m73","R16","W59","W60","2026-07-14T22:00:00Z"],
@@ -363,17 +722,13 @@ var MATCHES=[
   ["m76","R16","W65","W66","2026-07-16T02:00:00Z"],
   ["m77","R16","W67","W68","2026-07-16T22:00:00Z"],
   ["m78","R16","W69","W70","2026-07-17T02:00:00Z"],
-  // Quarter-finals
   ["m79","QF","W71","W72","2026-07-18T22:00:00Z"],
   ["m80","QF","W73","W74","2026-07-19T02:00:00Z"],
   ["m81","QF","W75","W76","2026-07-19T22:00:00Z"],
   ["m82","QF","W77","W78","2026-07-20T02:00:00Z"],
-  // Semi-finals
   ["m83","SF","W79","W80","2026-07-22T23:00:00Z"],
   ["m84","SF","W81","W82","2026-07-23T23:00:00Z"],
-  // Third-place play-off
   ["m85","3P","L83","L84","2026-07-25T19:00:00Z"],
-  // Final
   ["m86","FIN","W83","W84","2026-07-26T20:00:00Z"]
 ].map(function(m){return {id:m[0],grp:m[1],h:m[2],a:m[3],kt:new Date(m[4]).getTime()};});
 
@@ -382,7 +737,7 @@ var me=null, currentPool=null, orgUnlocked=false, orgCode="", myToken=null;
 var roster=[], myBets={}, results={}, allBets={}, matchOverrides={};
 var myPools=[], creators=[], isCreator=false;
 var curTab="matches", grpFilter="ALL", hideStarted=false, teamFilter="";
-var cdInterval=null;
+var cdInterval=null, tz="";
 
 /* ── Helpers ──────────────────────────────────────────────── */
 var $=function(s,r){return (r||document).querySelector(s);};
@@ -391,8 +746,14 @@ var fl=function(n){
   if(!c) return '<img src="https://flagcdn.com/w40/un.png" width="28" height="auto" alt="" style="border-radius:2px">';
   return '<img src="https://flagcdn.com/w40/'+c+'.png" width="28" height="auto" alt="'+esc(n)+'" style="border-radius:2px">';
 };
-function fmtDay(ts){return new Date(ts).toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});}
-function fmtTime(ts){return new Date(ts).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});}
+function fmtDay(ts){
+  var locale=lang==="de"?"de-DE":"en-US";
+  return new Date(ts).toLocaleDateString(locale,{weekday:"long",day:"numeric",month:"long"});
+}
+function fmtTime(ts){
+  var locale=lang==="de"?"de-DE":"en-US";
+  return new Date(ts).toLocaleTimeString(locale,{hour:"2-digit",minute:"2-digit"});
+}
 function dayKey(ts){var d=new Date(ts);return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 var toastT;
@@ -413,14 +774,70 @@ function scorePoints(bet,res){
   return 0;
 }
 
+/* ── Language ─────────────────────────────────────────────── */
+function updateFoot(){
+  $("#foot").innerHTML=t("tz_foot").replace("{{tz}}","<b>"+esc(tz)+"</b>");
+}
+function updateTabLabels(){
+  var keys={matches:"tab_matches",mypicks:"tab_mypicks",board:"tab_board",rules:"tab_rules",invite:"tab_invite",org:"tab_org"};
+  document.querySelectorAll(".tab").forEach(function(tab){
+    var k=keys[tab.dataset.tab];
+    if(k) tab.textContent=t(k);
+  });
+}
+function applyStaticLang(){
+  document.documentElement.lang=lang;
+  document.title=t("title");
+  $("#kicker").textContent=t("kicker");
+  $("#h1main").innerHTML='WORLD CUP <span class="pop">2026</span><br>'+esc(t("h1_line2"));
+  $("#cdLab").textContent=t("cd_lab");
+  $("#backBtn").textContent=t("back_btn");
+  var ng=$("#nameGo");
+  if(ng&&!ng.disabled) ng.textContent=t("let_me_in");
+  $("#nameInput").placeholder=t("name_ph");
+  $("#modalH3").innerHTML=th("modal_h3");
+  $("#modalP").innerHTML=t("modal_p");
+  updateTabLabels();
+  if(tz) updateFoot();
+  if(currentPool){
+    $("#poolName").innerHTML='<span>'+t("pool_prefix")+'</span> '+esc(currentPool.name);
+  } else {
+    $("#poolName").innerHTML='<span>'+t("pools_prefix")+'</span> World Cup 2026';
+  }
+}
+function setLang(l){
+  lang=l;
+  try{localStorage.setItem("wm26_lang",JSON.stringify(l));}catch(e){}
+  applyStaticLang();
+  $("#langDe").classList.toggle("active",lang==="de");
+  $("#langEn").classList.toggle("active",lang==="en");
+  if(currentPool){
+    if(curTab==="matches") renderMatches();
+    else if(curTab==="mypicks") renderMyPicks();
+    else if(curTab==="board") renderBoard();
+    else if(curTab==="rules") renderRules();
+    else if(curTab==="invite") renderInvite();
+    else if(curTab==="org") renderOrg();
+  } else {
+    renderLobby();
+  }
+  renderMeBar();
+}
+$("#langDe").onclick=function(){setLang("de");};
+$("#langEn").onclick=function(){setLang("en");};
+
 /* ── Init & routing ───────────────────────────────────────── */
 async function init(){
-  try{$("#tzName").textContent=Intl.DateTimeFormat().resolvedOptions().timeZone||"your local timezone";}catch(e){}
-  me = await pget("me");
-  myToken = await pget("token");
-  var urlPool = new URLSearchParams(window.location.search).get("p");
+  try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||t("tz_default");}catch(e){tz=t("tz_default");}
+  applyStaticLang();
+  updateFoot();
+  $("#langDe").classList.toggle("active",lang==="de");
+  $("#langEn").classList.toggle("active",lang==="en");
+  me=await pget("me");
+  myToken=await pget("token");
+  var urlPool=new URLSearchParams(window.location.search).get("p");
   if(!me){
-    if(urlPool) pset("pendingPool", urlPool);
+    if(urlPool) pset("pendingPool",urlPool);
     showNameModal();
     return;
   }
@@ -439,12 +856,12 @@ async function init(){
 async function route(poolCode){
   if(poolCode){
     try{
-      await apiPost({action:"joinPool", inviteCode:poolCode, playerName:me});
-      var pool = await apiGet({action:"poolByCode", code:poolCode});
-      currentPool = {id:pool.id, name:pool.name, inviteCode:pool.invite_code, ownerName:pool.owner_name};
+      await apiPost({action:"joinPool",inviteCode:poolCode,playerName:me});
+      var pool=await apiGet({action:"poolByCode",code:poolCode});
+      currentPool={id:pool.id,name:pool.name,inviteCode:pool.invite_code,ownerName:pool.owner_name};
       await enterPool();
     }catch(e){
-      toast("Pool not found");
+      toast(t("toast_pool_not_found"));
       history.replaceState({},"",(new URL(window.location.href)).pathname);
       await showLobby();
     }
@@ -461,21 +878,21 @@ function showNameModal(){
 }
 async function joinAs(name){
   name=(name||"").trim(); if(!name){$("#nameInput").focus();return;}
-  var btn=$("#nameGo"); btn.disabled=true; btn.textContent="Joining…";
+  var btn=$("#nameGo"); btn.disabled=true; btn.textContent=t("joining_lbl");
   try{
     me=name; pset("me",me);
     var tok=genUUID();
     var reg=await apiPost({action:"register",name:me,token:tok});
     myToken=reg.token||tok; pset("token",myToken);
     $("#nameModal").classList.remove("show");
-    var pending = await pget("pendingPool");
+    var pending=await pget("pendingPool");
     pset("pendingPool",null);
     await route(pending);
   }catch(e){
     me=null; pset("me",null);
-    toast(e.message||"Couldn't join");
+    toast(errMsg(e)||t("toast_couldnt_join"));
   }finally{
-    btn.disabled=false; btn.textContent="Let me in →";
+    btn.disabled=false; btn.textContent=t("let_me_in");
   }
 }
 $("#nameGo").onclick=function(){joinAs($("#nameInput").value);};
@@ -491,10 +908,10 @@ async function showLobby(){
   $("#foot").style.display="none";
   var url=new URL(window.location.href); url.searchParams.delete("p");
   history.replaceState({},"",(url.pathname+(url.search==="?"?"":url.search)));
-  $("#poolName").innerHTML='<span>Pools:</span> World Cup 2026';
+  $("#poolName").innerHTML='<span>'+t("pools_prefix")+'</span> World Cup 2026';
   renderMeBar();
   var loaded=await Promise.all([
-    me ? apiGet({action:"pools",player:me}).then(function(d){return d.pools||[];}).catch(function(){return[];}) : Promise.resolve([]),
+    me?apiGet({action:"pools",player:me}).then(function(d){return d.pools||[];}).catch(function(){return[];}):Promise.resolve([]),
     apiGet({action:"creators"}).then(function(d){return d.creators||[];}).catch(function(){return[];})
   ]);
   myPools=loaded[0]; creators=loaded[1];
@@ -505,7 +922,7 @@ async function showLobby(){
 function renderLobby(){
   var html="";
   if(myPools.length){
-    html+='<div class="kicker" style="margin:16px 2px 10px">Your pools</div>';
+    html+='<div class="kicker" style="margin:16px 2px 10px">'+esc(t("your_pools"))+'</div>';
     myPools.forEach(function(p){
       html+='<div class="pool-card" data-code="'+esc(p.invite_code)+'">'+
         '<div><div class="pc-name">'+esc(p.name)+'</div>'+
@@ -513,22 +930,22 @@ function renderLobby(){
         '<span class="pc-arr">→</span></div>';
     });
   } else {
-    html+='<div class="empty" style="padding:30px 0"><div class="big">No pools yet</div>Join one below or create your own.</div>';
+    html+='<div class="empty" style="padding:30px 0"><div class="big">'+esc(t("no_pools_big"))+'</div>'+esc(t("no_pools_sub"))+'</div>';
   }
-  html+='<div class="pnl" style="margin-top:18px"><h2>Join a <span class="em">pool</span></h2>'+
-    '<p>Got an invite link? The code is the part after <b>?p=</b> in the URL.</p>'+
-    '<div class="row-in"><input class="txt" id="joinCodeIn" placeholder="Enter code e.g. ABC1234" maxlength="12" style="flex:1">'+
-    '<button class="btn" id="joinCodeBtn">Join</button></div></div>';
+  html+='<div class="pnl" style="margin-top:18px"><h2>'+th("h2_join_pool")+'</h2>'+
+    '<p>'+t("join_pool_p")+'</p>'+
+    '<div class="row-in"><input class="txt" id="joinCodeIn" placeholder="'+esc(t("join_code_ph"))+'" maxlength="12" style="flex:1">'+
+    '<button class="btn" id="joinCodeBtn">'+esc(t("join_btn"))+'</button></div></div>';
   if(isCreator){
-    html+='<div class="pnl"><h2>Create a <span class="em">pool</span></h2>'+
-      '<input class="txt" id="newPoolName" placeholder="Pool name" style="margin-bottom:10px">'+
-      '<input class="txt" id="newOrgCode" placeholder="Organizer secret code (only you know this)" maxlength="40" style="margin-bottom:14px">'+
-      '<button class="btn" id="createPoolBtn">Create pool</button></div>';
+    html+='<div class="pnl"><h2>'+th("h2_create_pool")+'</h2>'+
+      '<input class="txt" id="newPoolName" placeholder="'+esc(t("pool_name_ph"))+'" style="margin-bottom:10px">'+
+      '<input class="txt" id="newOrgCode" placeholder="'+esc(t("org_code_ph"))+'" maxlength="40" style="margin-bottom:14px">'+
+      '<button class="btn" id="createPoolBtn">'+esc(t("create_pool_btn"))+'</button></div>';
   }
-  if(me && creators.length && creators[0]==="Max" && me==="Max"){
-    html+='<div class="pnl"><h2>Admin <span class="em">panel</span></h2>'+
-      '<p>Grant or revoke pool-creation rights for other players.</p>'+
-      '<div id="adminArea"><button class="btn ghost" id="adminUnlockBtn">Unlock with admin code</button></div></div>';
+  if(me&&creators.length&&creators[0]==="Max"&&me==="Max"){
+    html+='<div class="pnl"><h2>'+th("h2_admin")+'</h2>'+
+      '<p>'+esc(t("admin_panel_p"))+'</p>'+
+      '<div id="adminArea"><button class="btn ghost" id="adminUnlockBtn">'+esc(t("unlock_admin_btn"))+'</button></div></div>';
   }
   $("#lobby-content").innerHTML=html;
 
@@ -540,24 +957,24 @@ function renderLobby(){
         var pool=await apiGet({action:"poolByCode",code:code});
         currentPool={id:pool.id,name:pool.name,inviteCode:pool.invite_code,ownerName:pool.owner_name};
         await enterPool();
-      }catch(e){toast("Couldn't load pool");card.style.opacity="1";}
+      }catch(e){toast(t("toast_couldnt_load"));card.style.opacity="1";}
     };
   });
 
   var joinBtn=$("#joinCodeBtn");
   if(joinBtn) joinBtn.onclick=async function(){
     var code=($("#joinCodeIn").value||"").trim().toUpperCase();
-    if(!code){toast("Enter a code");return;}
-    joinBtn.disabled=true; joinBtn.textContent="Joining…";
+    if(!code){toast(t("toast_enter_code"));return;}
+    joinBtn.disabled=true; joinBtn.textContent=t("joining_lbl");
     try{
       await apiPost({action:"joinPool",inviteCode:code,playerName:me});
       var pool=await apiGet({action:"poolByCode",code:code});
       currentPool={id:pool.id,name:pool.name,inviteCode:pool.invite_code,ownerName:pool.owner_name};
       await enterPool();
-      toast("Joined "+pool.name+"!");
+      toast(t("toast_joined",{name:pool.name}));
     }catch(e){
-      toast(e.message||"Pool not found");
-      joinBtn.disabled=false; joinBtn.textContent="Join";
+      toast(errMsg(e)||t("toast_pool_not_found"));
+      joinBtn.disabled=false; joinBtn.textContent=t("join_btn");
     }
   };
 
@@ -565,28 +982,28 @@ function renderLobby(){
   if(createBtn) createBtn.onclick=async function(){
     var name=($("#newPoolName").value||"").trim();
     var code=($("#newOrgCode").value||"").trim();
-    if(!name||!code){toast("Fill in both fields");return;}
-    createBtn.disabled=true; createBtn.textContent="Creating…";
+    if(!name||!code){toast(t("toast_fill_both"));return;}
+    createBtn.disabled=true; createBtn.textContent=t("creating_lbl");
     try{
       var d=await apiPost({action:"createPool",name:name,organizerCode:code,ownerName:me});
-      toast("Pool created! Code: "+d.inviteCode);
+      toast(t("toast_pool_created",{code:d.inviteCode}));
       await showLobby();
     }catch(e){
-      toast(e.message||"Couldn't create pool");
-      createBtn.disabled=false; createBtn.textContent="Create pool";
+      toast(errMsg(e)||t("toast_couldnt_create"));
+      createBtn.disabled=false; createBtn.textContent=t("create_pool_btn");
     }
   };
 
   var adminBtn=$("#adminUnlockBtn");
   if(adminBtn) adminBtn.onclick=function(){
     $("#adminArea").innerHTML=
-      '<input class="txt" id="adminCodeIn" type="password" placeholder="Admin code" style="margin-bottom:10px">'+
-      '<button class="btn" id="adminVerifyBtn">Unlock</button>';
+      '<input class="txt" id="adminCodeIn" type="password" placeholder="'+esc(t("admin_code_ph"))+'" style="margin-bottom:10px">'+
+      '<button class="btn" id="adminVerifyBtn">'+esc(t("unlock_btn"))+'</button>';
     $("#adminVerifyBtn").onclick=async function(){
       var code=($("#adminCodeIn").value||"").trim();
       var d=await apiPost({action:"verifyAdminCode",code:code}).catch(function(){return{valid:false};});
       if(d.valid) renderAdminUnlocked(code);
-      else toast("Wrong admin code");
+      else toast(t("toast_wrong_admin"));
     };
   };
 }
@@ -594,23 +1011,23 @@ function renderLobby(){
 function renderAdminUnlocked(adminCode){
   var listHtml=creators.map(function(c){return '<span class="me-chip" style="margin:3px 4px 3px 0;display:inline-flex">'+esc(c)+'</span>';}).join('');
   $("#adminArea").innerHTML=
-    '<div class="hint" style="margin-bottom:10px">Current creators: '+listHtml+'</div>'+
+    '<div class="hint" style="margin-bottom:10px">'+esc(t("current_creators"))+listHtml+'</div>'+
     '<div class="row-in">'+
-    '<input class="txt" id="grantNameIn" placeholder="Player name" style="flex:1;min-width:140px">'+
-    '<button class="btn" id="grantBtn">Grant</button>'+
-    '<button class="btn ghost" id="revokeBtn">Revoke</button>'+
+    '<input class="txt" id="grantNameIn" placeholder="'+esc(t("player_name_ph"))+'" style="flex:1;min-width:140px">'+
+    '<button class="btn" id="grantBtn">'+esc(t("grant_btn"))+'</button>'+
+    '<button class="btn ghost" id="revokeBtn">'+esc(t("revoke_btn"))+'</button>'+
     '</div>';
   $("#grantBtn").onclick=async function(){
     var n=($("#grantNameIn").value||"").trim(); if(!n) return;
-    await apiPost({action:"grantCreator",name:n,adminCode:adminCode}).catch(function(e){toast(e.message);});
+    await apiPost({action:"grantCreator",name:n,adminCode:adminCode}).catch(function(e){toast(errMsg(e));});
     creators=await apiGet({action:"creators"}).then(function(d){return d.creators||[];});
-    renderAdminUnlocked(adminCode); toast("Granted: "+n);
+    renderAdminUnlocked(adminCode); toast(t("toast_granted",{name:n}));
   };
   $("#revokeBtn").onclick=async function(){
     var n=($("#grantNameIn").value||"").trim(); if(!n) return;
-    await apiPost({action:"revokeCreator",name:n,adminCode:adminCode}).catch(function(e){toast(e.message);});
+    await apiPost({action:"revokeCreator",name:n,adminCode:adminCode}).catch(function(e){toast(errMsg(e));});
     creators=await apiGet({action:"creators"}).then(function(d){return d.creators||[];});
-    renderAdminUnlocked(adminCode); toast("Revoked: "+n);
+    renderAdminUnlocked(adminCode); toast(t("toast_revoked",{name:n}));
   };
 }
 
@@ -621,10 +1038,11 @@ async function enterPool(){
   $("#view-lobby").style.display="none";
   $("#view-pool").style.display="block";
   $("#foot").style.display="block";
+  updateFoot();
   var url=new URL(window.location.href);
   url.searchParams.set("p",currentPool.inviteCode);
   history.replaceState({},"",(url.pathname+url.search));
-  $("#poolName").innerHTML='<span>Pool:</span> '+esc(currentPool.name);
+  $("#poolName").innerHTML='<span>'+t("pool_prefix")+'</span> '+esc(currentPool.name);
   renderMeBar();
   var loaded=await Promise.all([
     apiGet({action:"members",poolId:currentPool.id}).then(function(d){return d.players||[];}).catch(function(){return[];}),
@@ -636,6 +1054,7 @@ async function enterPool(){
   roster=loaded[0]; myBets=loaded[1]; results=loaded[2]; allBets=loaded[3]; matchOverrides=loaded[4];
   renderMeBar();
   curTab="matches";
+  updateTabLabels();
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("active",t.dataset.tab==="matches");});
   ["matches","mypicks","board","rules","invite","org"].forEach(function(k){
     $("#view-"+k).style.display=(k==="matches")?"block":"none";
@@ -647,9 +1066,9 @@ async function enterPool(){
 function renderMeBar(){
   if(!me){$("#meBar").innerHTML="";return;}
   var count=currentPool?roster.length:0;
-  var poolInfo=currentPool?(count+" player"+(count===1?"":"s")+" in pool"):"";
-  $("#meBar").innerHTML='<span class="me-chip">Playing as <b>'+esc(me)+'</b></span>'+
-    (poolInfo?'<span>'+poolInfo+'</span>':"");
+  var poolInfo=currentPool?(count+" "+t(count===1?"player_in_pool":"players_in_pool")):"";
+  $("#meBar").innerHTML='<span class="me-chip">'+esc(t("playing_as"))+' <b>'+esc(me)+'</b></span>'+
+    (poolInfo?'<span>'+esc(poolInfo)+'</span>':"");
 }
 
 /* ── Back button ──────────────────────────────────────────── */
@@ -676,10 +1095,10 @@ function renderMatches(){
   var hadSearchFocus=document.activeElement&&document.activeElement.classList.contains("team-search");
   var groups=["ALL","A","B","C","D","E","F","G","H","I","J","K","L","R32","R16","QF","SF","3P","FIN"];
   var html='<div class="filters">';
-  var KO={"R32":"R32","R16":"R16","QF":"QF","SF":"SF","3P":"3rd","FIN":"Final"};
-  groups.forEach(function(g){html+='<button class="chip'+(grpFilter===g?" active":"")+'" data-g="'+g+'">'+(g==="ALL"?"All":(KO[g]||"Grp "+g))+'</button>';});
-  html+='<label class="toggle"><input type="checkbox" id="hideChk"'+(hideStarted?" checked":"")+'> hide started</label></div>';
-  html+='<div class="team-search-wrap"><input class="team-search" type="text" placeholder="Search team…" value="'+esc(teamFilter)+'"></div>';
+  var KO={R32:t("ko_R32"),R16:t("ko_R16"),QF:t("ko_QF"),SF:t("ko_SF"),"3P":t("ko_3P"),FIN:t("ko_FIN")};
+  groups.forEach(function(g){html+='<button class="chip'+(grpFilter===g?" active":"")+'" data-g="'+g+'">'+(g==="ALL"?t("all_filter"):(KO[g]||t("grp_prefix")+g))+'</button>';});
+  html+='<label class="toggle"><input type="checkbox" id="hideChk"'+(hideStarted?" checked":"")+'> '+esc(t("hide_started"))+'</label></div>';
+  html+='<div class="team-search-wrap"><input class="team-search" type="text" placeholder="'+esc(t("search_team_ph"))+'" value="'+esc(teamFilter)+'"></div>';
   var tf=teamFilter.toLowerCase();
   var list=MATCHES.filter(function(m){
     if(grpFilter!=="ALL"&&m.grp!==grpFilter) return false;
@@ -687,7 +1106,7 @@ function renderMatches(){
     if(tf&&!m.h.toLowerCase().includes(tf)&&!m.a.toLowerCase().includes(tf)) return false;
     return true;
   });
-  if(!list.length){html+='<div class="empty"><div class="big">Nothing here</div>No matches match this filter.</div>';}
+  if(!list.length){html+='<div class="empty"><div class="big">'+esc(t("nothing_here_big"))+'</div>'+esc(t("nothing_here_sub"))+'</div>';}
   var lastDay="";
   list.forEach(function(m){
     var dk=dayKey(m.kt);
@@ -710,10 +1129,10 @@ function matchCard(m,now){
   var res=results[m.id],bet=myBets[m.id];
   var live=!open&&!res&&(now<m.kt+3*3600*1000);
   var sCls=res?"done":(open?"open":(live?"live":"locked"));
-  var sTxt=res?"Final":(open?"Open":(live?"Kicked off":"Locked"));
+  var sTxt=res?t("status_final"):(open?t("status_open"):(live?t("status_live"):t("status_locked")));
   var h='<div class="card" data-id="'+m.id+'">';
   h+='<div class="meta"><span class="gbadge">'+m.grp+'</span><span class="time">'+fmtTime(m.kt)+'</span>'+
-    '<span class="status '+sCls+'">'+sTxt+'</span></div>';
+    '<span class="status '+sCls+'">'+esc(sTxt)+'</span></div>';
   h+='<div class="match">'+
     '<div class="team home"><span class="flag">'+fl(rn(m,'h'))+'</span><span class="tname">'+esc(rn(m,'h'))+'</span></div>'+
     '<div class="vs">VS</div>'+
@@ -724,26 +1143,26 @@ function matchCard(m,now){
       '<input class="score-in" type="number" inputmode="numeric" min="0" max="99" placeholder="0" data-side="h" value="'+bh+'">'+
       '<span class="dash">:</span>'+
       '<input class="score-in" type="number" inputmode="numeric" min="0" max="99" placeholder="0" data-side="a" value="'+ba+'">'+
-      '<button class="save'+(bet?" saved":"")+'" data-save>'+(bet?"Saved ✓":"Save")+'</button></div>';
+      '<button class="save'+(bet?" saved":"")+'" data-save>'+(bet?t("saved_btn"):t("save_btn"))+'</button></div>';
   } else if(open&&!me){
-    h+='<div class="result-line"><span class="nobet">Pick a name to place your prediction.</span></div>';
+    h+='<div class="result-line"><span class="nobet">'+esc(t("pick_name_notice"))+'</span></div>';
   } else {
     var line='<div class="result-line">';
-    if(bet){line+='<span class="pill you"><span class="lab">Your tip</span>'+bet.h+'–'+bet.a+'</span>';}
-    else{line+='<span class="nobet">No prediction</span>';}
+    if(bet){line+='<span class="pill you"><span class="lab">'+esc(t("your_tip_lab"))+'</span>'+bet.h+'–'+bet.a+'</span>';}
+    else{line+='<span class="nobet">'+esc(t("no_prediction"))+'</span>';}
     if(res){
-      line+='<span class="pill final"><span class="lab">Result</span>'+res.h+'–'+res.a+'</span>';
+      line+='<span class="pill final"><span class="lab">'+esc(t("result_lab"))+'</span>'+res.h+'–'+res.a+'</span>';
       var p=scorePoints(bet,res);
       if(p!==null){line+='<span class="pts p'+p+'">+'+p+'</span>';}
     }
     line+='</div>'; h+=line;
     if(roster.length>1){
-      var tips='<div class="pool-tips"><span class="tips-label">Pool picks</span>';
+      var tips='<div class="pool-tips"><span class="tips-label">'+esc(t("pool_picks_lab"))+'</span>';
       roster.forEach(function(name){
         var b=(name===me)?bet:((allBets[name]||{})[m.id]||null);
         var isMine=(name===me);
         tips+='<span class="tip-chip'+(isMine?' mine':'')+'">'+
-          '<span class="tip-nm">'+esc(isMine?'You':name)+'</span>'+
+          '<span class="tip-nm">'+esc(isMine?t("you_lbl"):name)+'</span>'+
           (b?'<span class="tip-sc">'+esc(b.h)+'–'+esc(b.a)+'</span>':'<span class="tip-no">—</span>');
         if(b&&res){var tp=scorePoints(b,res);tips+='<span class="pts p'+tp+'">+'+tp+'</span>';}
         tips+='</span>';
@@ -759,23 +1178,23 @@ function bindCards(root){
   root.querySelectorAll(".card").forEach(function(card){
     var btn=card.querySelector("[data-save]");if(!btn)return;
     var ins=card.querySelectorAll(".score-in");
-    ins.forEach(function(inp){inp.addEventListener("input",function(){btn.classList.remove("saved");btn.textContent="Save";});});
+    ins.forEach(function(inp){inp.addEventListener("input",function(){btn.classList.remove("saved");btn.textContent=t("save_btn");});});
     btn.onclick=async function(){
       if(btn.disabled)return;
       var id=card.getAttribute("data-id");
       var h=parseInt(card.querySelector('[data-side="h"]').value,10);
       var a=parseInt(card.querySelector('[data-side="a"]').value,10);
-      if(isNaN(h)||isNaN(a)||h<0||a<0){toast("Enter both scores");return;}
-      btn.disabled=true; btn.textContent="Saving…";
+      if(isNaN(h)||isNaN(a)||h<0||a<0){toast(t("toast_enter_both_scores"));return;}
+      btn.disabled=true; btn.textContent=t("saving_btn");
       try{
         myBets[id]={h:h,a:a};
         if(!allBets[me])allBets[me]={};allBets[me][id]={h:h,a:a};
         await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,playerToken:myToken,matchId:id,h:h,a:a});
-        btn.classList.add("saved"); btn.textContent="Saved ✓";
-        toast("Prediction saved");
+        btn.classList.add("saved"); btn.textContent=t("saved_btn");
+        toast(t("toast_prediction_saved"));
       }catch(e){
-        toast("Couldn't save — check connection");
-        btn.textContent="Save";
+        toast(errMsg(e)||t("toast_couldnt_save"));
+        btn.textContent=t("save_btn");
       }finally{btn.disabled=false;}
     };
   });
@@ -784,7 +1203,7 @@ function bindCards(root){
 /* ── Leaderboard ──────────────────────────────────────────── */
 async function renderBoard(){
   var v=$("#view-board");
-  v.innerHTML='<div class="empty"><div class="big">Loading…</div>Tallying predictions.</div>';
+  v.innerHTML='<div class="empty"><div class="big">'+esc(t("loading_big"))+'</div>'+esc(t("tallying"))+'</div>';
   var loaded=await Promise.all([
     apiGet({action:"members",poolId:currentPool.id}).then(function(d){return d.players||[];}).catch(function(){return[];}),
     apiGet({action:"results",poolId:currentPool.id}).then(function(d){return d.results||{};}).catch(function(){return{};}),
@@ -792,7 +1211,7 @@ async function renderBoard(){
   ]);
   roster=loaded[0]; results=loaded[1]; allBets=loaded[2];
   var resCount=Object.keys(results).length;
-  if(!roster.length){v.innerHTML='<div class="empty"><div class="big">No players yet</div>Share the invite link.</div>';return;}
+  if(!roster.length){v.innerHTML='<div class="empty"><div class="big">'+esc(t("no_players_big"))+'</div>'+esc(t("share_invite"))+'</div>';return;}
   var rows=[];
   roster.forEach(function(name){
     var bets=(name===me)?myBets:(allBets[name]||{});
@@ -808,18 +1227,18 @@ async function renderBoard(){
   rows.sort(function(x,y){return y.pts-x.pts||y.exact-x.exact||x.name.localeCompare(y.name);});
   var html="";
   if(!resCount){
-    html+='<div class="pnl" style="text-align:center"><h2><span class="em">Kickoff</span> pending</h2>'+
-      '<p>No results yet — standings update the moment the organizer logs a score.</p></div>';
+    html+='<div class="pnl" style="text-align:center"><h2>'+th("h2_kickoff_pending")+'</h2>'+
+      '<p>'+esc(t("kickoff_pending_p"))+'</p></div>';
   }
-  html+='<div class="lb"><div class="lb-row head"><div>#</div><div>Player</div>'+
-    '<div style="text-align:right">Exact</div><div style="text-align:right">Pts</div></div>';
+  html+='<div class="lb"><div class="lb-row head"><div>#</div><div>'+esc(t("lb_player"))+'</div>'+
+    '<div style="text-align:right">'+esc(t("lb_exact"))+'</div><div style="text-align:right">'+esc(t("lb_pts"))+'</div></div>';
   rows.forEach(function(r,i){
     html+='<div class="lb-row"><div class="rank">'+(i+1)+'</div>'+
-      '<div class="lb-name">'+esc(r.name)+(r.name===me?'<span class="meflag">YOU</span>':'')+'</div>'+
+      '<div class="lb-name">'+esc(r.name)+(r.name===me?'<span class="meflag">'+esc(t("you_marker"))+'</span>':'')+'</div>'+
       '<div class="lb-sub">'+r.exact+' / '+r.played+'</div>'+
       '<div class="lb-pts">'+r.pts+'</div></div>';
   });
-  html+='</div><div class="hint" style="text-align:center">'+resCount+' of '+MATCHES.length+' matches have results.</div>';
+  html+='</div><div class="hint" style="text-align:center">'+esc(t("matches_have_results",{count:resCount,total:MATCHES.length}))+'</div>';
   v.innerHTML=html;
 }
 
@@ -827,7 +1246,7 @@ async function renderBoard(){
 function renderMyPicks(){
   var v=$("#view-mypicks");
   if(!me){
-    v.innerHTML='<div class="empty"><div class="big">No name set</div>Pick a name first to see your predictions.</div>';
+    v.innerHTML='<div class="empty"><div class="big">'+esc(t("no_name_big"))+'</div>'+esc(t("no_name_sub"))+'</div>';
     return;
   }
   var totalPts=0,exact=0,played=0;
@@ -841,12 +1260,12 @@ function renderMyPicks(){
   });
   var html='';
   html+='<div class="mypicks-summary">'+
-    '<div class="mps-item"><div class="mps-val">'+totalPts+'</div><div class="mps-lab">Points</div></div>'+
-    '<div class="mps-item"><div class="mps-val">'+exact+'</div><div class="mps-lab">Exact</div></div>'+
-    '<div class="mps-item"><div class="mps-val">'+played+' / '+Object.keys(myBets).length+'</div><div class="mps-lab">Scored / Picks</div></div>'+
+    '<div class="mps-item"><div class="mps-val">'+totalPts+'</div><div class="mps-lab">'+esc(t("pts_lab"))+'</div></div>'+
+    '<div class="mps-item"><div class="mps-val">'+exact+'</div><div class="mps-lab">'+esc(t("exact_lab"))+'</div></div>'+
+    '<div class="mps-item"><div class="mps-val">'+played+' / '+Object.keys(myBets).length+'</div><div class="mps-lab">'+esc(t("scored_picks_lab"))+'</div></div>'+
     '</div>';
   if(!cards.length){
-    html+='<div class="empty"><div class="big">Nothing yet</div>Place your first prediction on the Matches tab.</div>';
+    html+='<div class="empty"><div class="big">'+esc(t("nothing_yet_big"))+'</div>'+esc(t("nothing_yet_sub"))+'</div>';
     v.innerHTML=html; return;
   }
   var lastDay='';
@@ -858,13 +1277,13 @@ function renderMyPicks(){
       '<span class="mpc-vs">VS</span>'+
       '<span class="mpc-name">'+esc(rn(c.m,'a'))+'</span>'+fl(rn(c.m,'a'))+'</div>'+
       '<div class="mpc-row">';
-    if(c.bet){html+='<span class="pill you"><span class="lab">Your pick</span>'+esc(c.bet.h)+'–'+esc(c.bet.a)+'</span>';}
-    else{html+='<span class="nobet">No pick</span>';}
+    if(c.bet){html+='<span class="pill you"><span class="lab">'+esc(t("your_pick_lab"))+'</span>'+esc(c.bet.h)+'–'+esc(c.bet.a)+'</span>';}
+    else{html+='<span class="nobet">'+esc(t("no_pick"))+'</span>';}
     if(c.res){
-      html+='<span class="pill final"><span class="lab">Result</span>'+esc(c.res.h)+'–'+esc(c.res.a)+'</span>';
+      html+='<span class="pill final"><span class="lab">'+esc(t("result_lab"))+'</span>'+esc(c.res.h)+'–'+esc(c.res.a)+'</span>';
       if(c.p!==null) html+='<span class="pts p'+c.p+'">+'+c.p+'</span>';
     } else {
-      html+='<span class="mpc-pending">Pending</span>';
+      html+='<span class="mpc-pending">'+esc(t("pending_lbl"))+'</span>';
     }
     html+='</div></div>';
   });
@@ -874,43 +1293,44 @@ function renderMyPicks(){
 /* ── Rules ────────────────────────────────────────────────── */
 function renderRules(){
   $("#view-rules").innerHTML=
-    '<div class="pnl"><h2>How <span class="em">points</span> work</h2>'+
-    '<p>Predict the exact full-time score (90 min + stoppage, before extra time or penalties).</p>'+
-    '<div class="rule"><span class="b pts p3">+3</span><div class="t">Exact score <span>— e.g. you said 2–1 and it finished 2–1.</span></div></div>'+
-    '<div class="rule"><span class="b pts p1">+1</span><div class="t">Correct result <span>— right winner or draw, wrong score.</span></div></div>'+
-    '<div class="rule"><span class="b pts p0">+0</span><div class="t">Wrong outcome <span>— better luck next match.</span></div></div>'+
+    '<div class="pnl"><h2>'+th("h2_how_points")+'</h2>'+
+    '<p>'+esc(t("rules_pts_p"))+'</p>'+
+    '<div class="rule"><span class="b pts p3">+3</span><div class="t">'+esc(t("rule_exact_main"))+' <span>'+esc(t("rule_exact_sub"))+'</span></div></div>'+
+    '<div class="rule"><span class="b pts p1">+1</span><div class="t">'+esc(t("rule_correct_main"))+' <span>'+esc(t("rule_correct_sub"))+'</span></div></div>'+
+    '<div class="rule"><span class="b pts p0">+0</span><div class="t">'+esc(t("rule_wrong_main"))+' <span>'+esc(t("rule_wrong_sub"))+'</span></div></div>'+
     '</div>'+
-    '<div class="pnl"><h2>The <span class="em">rules</span></h2>'+
-    '<p><b>Lock-in:</b> predictions close at kickoff. Submit early.</p>'+
-    '<p><b>Editing:</b> change your tip any time before kickoff — only the last save counts.</p>'+
-    '<p><b>Tie-break:</b> level on points? Most exact scorelines wins.</p></div>';
+    '<div class="pnl"><h2>'+th("h2_the_rules")+'</h2>'+
+    '<p>'+t("rule_lockin")+'</p>'+
+    '<p>'+t("rule_edit")+'</p>'+
+    '<p>'+t("rule_tiebreak")+'</p></div>';
 }
 
 /* ── Invite ───────────────────────────────────────────────── */
 function renderInvite(){
   var poolUrl=window.location.origin+"/?p="+currentPool.inviteCode;
-  var msg="Join "+currentPool.name+"! Predict World Cup 2026 scores and compete: "+poolUrl;
+  var msg=t("invite_msg",{pool:currentPool.name,url:poolUrl});
+  var subj=t("invite_subject",{pool:currentPool.name});
   var waHref="https://wa.me/?text="+encodeURIComponent(msg);
-  var mailHref="mailto:?subject="+encodeURIComponent("Join "+currentPool.name)+"&body="+encodeURIComponent(msg);
+  var mailHref="mailto:?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(msg);
   $("#view-invite").innerHTML=
-    '<div class="pnl"><h2>Invite to <span class="em">'+esc(currentPool.name)+'</span></h2>'+
-    '<p>Share the link or code — anyone who opens it joins this pool automatically.</p>'+
+    '<div class="pnl"><h2>'+esc(t("invite_h"))+' <span class="em">'+esc(currentPool.name)+'</span></h2>'+
+    '<p>'+esc(t("invite_p"))+'</p>'+
     '<div class="invite-code">'+esc(currentPool.inviteCode)+'</div>'+
     '<div class="row-in"><input class="txt" id="inviteUrl" readonly value="'+esc(poolUrl)+'" style="flex:1;min-width:160px">'+
-    '<button class="btn" id="copyUrl">Copy</button></div>'+
+    '<button class="btn" id="copyUrl">'+esc(t("copy_btn"))+'</button></div>'+
     '<div class="row-in" style="margin-top:10px">'+
     '<a class="btn" href="'+waHref+'" target="_blank" rel="noopener" style="background:#25d366;text-decoration:none;display:inline-flex;align-items:center;gap:6px">'+
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.562 4.14 1.542 5.877L.057 23.882a.5.5 0 0 0 .606.63l6.288-1.643A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.893a9.878 9.878 0 0 1-5.036-1.378l-.361-.214-3.735.976.998-3.645-.235-.374A9.876 9.876 0 0 1 2.107 12C2.107 6.558 6.558 2.107 12 2.107S21.893 6.558 21.893 12 17.442 21.893 12 21.893z"/></svg>'+
-    'WhatsApp</a>'+
+    esc(t("whatsapp_lbl"))+'</a>'+
     '<a class="btn ghost" href="'+mailHref+'" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">'+
     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>'+
-    'Email</a></div>'+
-    '<div class="hint" style="margin-top:8px">No account needed — just the link.</div></div>';
+    esc(t("email_lbl"))+'</a></div>'+
+    '<div class="hint" style="margin-top:8px">'+esc(t("no_account"))+'</div></div>';
   var btn=$("#copyUrl");
   if(btn) btn.onclick=function(){
     var inp=$("#inviteUrl");inp.select();
-    try{navigator.clipboard.writeText(inp.value);toast("Link copied");}
-    catch(e){try{document.execCommand("copy");toast("Link copied");}catch(_){toast("Select & copy manually");}}
+    try{navigator.clipboard.writeText(inp.value);toast(t("toast_link_copied"));}
+    catch(e){try{document.execCommand("copy");toast(t("toast_link_copied"));}catch(_){toast(t("toast_copy_manual"));}}
   };
 }
 
@@ -918,16 +1338,16 @@ function renderInvite(){
 function renderOrg(){
   var v=$("#view-org");
   if(!orgUnlocked){
-    v.innerHTML='<div class="pnl"><h2>Organizer <span class="em">login</span></h2>'+
-      '<p>Enter the organizer code to log or edit results for this pool.</p>'+
-      '<div class="row-in"><input class="txt" id="codeIn" placeholder="Organizer code" style="flex:1;min-width:180px">'+
-      '<button class="btn" id="codeGo">Unlock</button></div>'+
-      '<div class="hint">Not the organizer? Just make your predictions in the Matches tab.</div></div>';
+    v.innerHTML='<div class="pnl"><h2>'+th("h2_org_login")+'</h2>'+
+      '<p>'+esc(t("org_login_p"))+'</p>'+
+      '<div class="row-in"><input class="txt" id="codeIn" placeholder="'+esc(t("org_code_input_ph"))+'" style="flex:1;min-width:180px">'+
+      '<button class="btn" id="codeGo">'+esc(t("unlock_btn"))+'</button></div>'+
+      '<div class="hint">'+esc(t("org_not_org"))+'</div></div>';
     $("#codeGo").onclick=async function(){
       var code=($("#codeIn").value||"").trim();if(!code)return;
       var d=await apiPost({action:"verifyOrgCode",poolId:currentPool.id,code:code}).catch(function(){return{valid:false};});
-      if(d.valid){orgUnlocked=true;orgCode=code;toast("Unlocked");renderOrg();}
-      else toast("Wrong code");
+      if(d.valid){orgUnlocked=true;orgCode=code;toast(t("toast_unlocked"));renderOrg();}
+      else toast(t("toast_wrong_code"));
     };
     $("#codeIn").addEventListener("keydown",function(e){if(e.key==="Enter")$("#codeGo").click();});
     return;
@@ -935,20 +1355,20 @@ function renderOrg(){
   var now=Date.now();
   var KO_GROUPS=["R32","R16","QF","SF","3P","FIN"];
   var koMatches=MATCHES.filter(function(m){return KO_GROUPS.indexOf(m.grp)!==-1;});
-  var html='<div class="pnl"><h2>Knockout <span class="em">teams</span></h2>'+
-    '<p>Update team names once the bracket is decided — changes appear instantly for all players.</p>';
+  var html='<div class="pnl"><h2>'+th("h2_ko_teams")+'</h2>'+
+    '<p>'+esc(t("ko_teams_p"))+'</p>';
   koMatches.forEach(function(m){
     html+='<div class="ko-row" data-ko="'+m.id+'">'+
       '<span class="gbadge" style="flex:0 0 auto">'+m.grp+'</span>'+
-      '<input class="txt ko-h" value="'+esc(rn(m,'h'))+'" placeholder="Home team" style="flex:1;min-width:80px">'+
+      '<input class="txt ko-h" value="'+esc(rn(m,'h'))+'" placeholder="'+esc(t("home_team_ph"))+'" style="flex:1;min-width:80px">'+
       '<span style="color:var(--mut);font-weight:800;padding:0 4px">vs</span>'+
-      '<input class="txt ko-a" value="'+esc(rn(m,'a'))+'" placeholder="Away team" style="flex:1;min-width:80px">'+
-      '<button class="btn ko-save" style="flex:0 0 auto">Set</button>'+
+      '<input class="txt ko-a" value="'+esc(rn(m,'a'))+'" placeholder="'+esc(t("away_team_ph"))+'" style="flex:1;min-width:80px">'+
+      '<button class="btn ko-save" style="flex:0 0 auto">'+esc(t("set_btn"))+'</button>'+
       '</div>';
   });
   html+='</div>';
-  html+='<div class="pnl"><h2>Log <span class="em">results</span></h2>'+
-    '<p>Enter final scores. Saving updates the leaderboard for everyone in this pool.</p></div>';
+  html+='<div class="pnl"><h2>'+th("h2_log_results")+'</h2>'+
+    '<p>'+esc(t("log_results_p"))+'</p></div>';
   var lastDay="";
   MATCHES.forEach(function(m){
     var dk=dayKey(m.kt);
@@ -956,7 +1376,7 @@ function renderOrg(){
     var r=results[m.id],started=m.kt<=now;
     html+='<div class="card" data-rid="'+m.id+'">'+
       '<div class="meta"><span class="gbadge">'+m.grp+'</span><span class="time">'+fmtTime(m.kt)+'</span>'+
-      (r?'<span class="status done">Logged</span>':(started?'<span class="status live">Awaiting</span>':'<span class="status locked">Upcoming</span>'))+'</div>'+
+      (r?'<span class="status done">'+esc(t("status_logged"))+'</span>':(started?'<span class="status live">'+esc(t("status_awaiting"))+'</span>':'<span class="status locked">'+esc(t("status_upcoming"))+'</span>'))+'</div>'+
       '<div class="match">'+
       '<div class="team home"><span class="flag">'+fl(rn(m,'h'))+'</span><span class="tname">'+esc(rn(m,'h'))+'</span></div>'+
       '<div class="vs">VS</div>'+
@@ -965,8 +1385,8 @@ function renderOrg(){
       '<input class="score-in" type="number" inputmode="numeric" min="0" max="99" data-rs="h" value="'+(r?r.h:"")+'">'+
       '<span class="dash">:</span>'+
       '<input class="score-in" type="number" inputmode="numeric" min="0" max="99" data-rs="a" value="'+(r?r.a:"")+'">'+
-      '<button class="save'+(r?" saved":"")+'" data-rsave>'+(r?"Logged ✓":"Log")+'</button>'+
-      (r?'<button class="save" data-rclear style="background:transparent;color:var(--coral);border:1px solid rgba(255,90,60,.4)">Clear</button>':'')+
+      '<button class="save'+(r?" saved":"")+'" data-rsave>'+(r?esc(t("logged_btn")):esc(t("log_btn")))+'</button>'+
+      (r?'<button class="save" data-rclear style="background:transparent;color:var(--coral);border:1px solid rgba(255,90,60,.4)">'+esc(t("clear_btn"))+'</button>':'')+
       '</div></div>';
   });
   v.innerHTML=html;
@@ -976,14 +1396,14 @@ function renderOrg(){
     btn.onclick=async function(){
       var h=(row.querySelector(".ko-h").value||"").trim();
       var a=(row.querySelector(".ko-a").value||"").trim();
-      if(!h||!a){toast("Enter both team names");return;}
-      btn.disabled=true; btn.textContent="Saving…";
+      if(!h||!a){toast(t("toast_enter_both_teams"));return;}
+      btn.disabled=true; btn.textContent=t("saving_lbl");
       try{
         await apiPost({action:"saveMatchName",poolId:currentPool.id,matchId:id,home:h,away:a,code:orgCode});
         if(!matchOverrides[id])matchOverrides[id]={};
         matchOverrides[id].h=h; matchOverrides[id].a=a;
-        btn.textContent="Saved ✓"; toast("Teams updated");
-      }catch(e){toast(e.message||"Couldn't save");btn.textContent="Set";}
+        btn.textContent=t("saved_btn"); toast(t("toast_teams_updated"));
+      }catch(e){toast(errMsg(e)||t("toast_couldnt_save_set"));btn.textContent=t("set_btn");}
       finally{btn.disabled=false;}
     };
   });
@@ -992,28 +1412,28 @@ function renderOrg(){
     var sBtn=card.querySelector("[data-rsave]");
     var cBtn=card.querySelector("[data-rclear]");
     card.querySelectorAll(".score-in").forEach(function(inp){
-      inp.addEventListener("input",function(){sBtn.classList.remove("saved");sBtn.textContent="Log";});
+      inp.addEventListener("input",function(){sBtn.classList.remove("saved");sBtn.textContent=t("log_btn");});
     });
     sBtn.onclick=async function(){
       if(sBtn.disabled)return;
       var h=parseInt(card.querySelector('[data-rs="h"]').value,10);
       var a=parseInt(card.querySelector('[data-rs="a"]').value,10);
-      if(isNaN(h)||isNaN(a)||h<0||a<0){toast("Enter both scores");return;}
-      sBtn.disabled=true; sBtn.textContent="Saving…";
+      if(isNaN(h)||isNaN(a)||h<0||a<0){toast(t("toast_enter_both_scores"));return;}
+      sBtn.disabled=true; sBtn.textContent=t("saving_lbl");
       try{
         await apiPost({action:"saveResult",poolId:currentPool.id,matchId:id,h:h,a:a,code:orgCode});
         results[id]={h:h,a:a};
-        sBtn.classList.add("saved"); sBtn.textContent="Logged ✓";
-        toast("Result saved — board updated");
+        sBtn.classList.add("saved"); sBtn.textContent=t("logged_btn");
+        toast(t("toast_result_saved"));
         renderOrg();
       }catch(e){
-        toast(e.message||"Couldn't save");
-        sBtn.textContent="Log";
+        toast(errMsg(e)||t("toast_couldnt_save"));
+        sBtn.textContent=t("log_btn");
       }finally{sBtn.disabled=false;}
     };
     if(cBtn) cBtn.onclick=async function(){
       await apiPost({action:"clearResult",poolId:currentPool.id,matchId:id,code:orgCode}).catch(function(){});
-      delete results[id]; toast("Cleared"); renderOrg();
+      delete results[id]; toast(t("toast_cleared")); renderOrg();
     };
   });
 }
