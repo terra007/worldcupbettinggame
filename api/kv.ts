@@ -137,18 +137,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!password) return res.status(400).json({ error: "Password required" });
 
         const hash = hashPassword(name, password);
-        const existing = await sql`SELECT token, password_hash FROM players WHERE name = ${name}`;
+
+        // SELECT — gracefully handle pre-migration DB (no password_hash column yet)
+        const existing = await sql`SELECT token FROM players WHERE name = ${name}`;
+        let storedHash: string | null = null;
+        if (existing.length) {
+          try {
+            const pw = await sql`SELECT password_hash FROM players WHERE name = ${name}`;
+            storedHash = (pw[0]?.password_hash as string | null) ?? null;
+          } catch { /* column not yet added — treat as legacy */ }
+        }
 
         if (!existing.length) {
-          // New player — register with password
-          await sql`INSERT INTO players (name, token, password_hash) VALUES (${name}, ${token}, ${hash})`;
+          // New player — try with password_hash, fall back if column missing
+          try {
+            await sql`INSERT INTO players (name, token, password_hash) VALUES (${name}, ${token}, ${hash})`;
+          } catch {
+            await sql`INSERT INTO players (name, token) VALUES (${name}, ${token})`;
+          }
           return res.status(200).json({ ok: true, token });
         }
 
-        const storedHash = existing[0].password_hash as string | null;
         if (storedHash === null) {
-          // Legacy player without a password — let them claim the account
-          await sql`UPDATE players SET token = ${token}, password_hash = ${hash} WHERE name = ${name}`;
+          // Legacy player — claim the account; store password if column exists
+          try {
+            await sql`UPDATE players SET token = ${token}, password_hash = ${hash} WHERE name = ${name}`;
+          } catch {
+            await sql`UPDATE players SET token = ${token} WHERE name = ${name}`;
+          }
           return res.status(200).json({ ok: true, token });
         }
 

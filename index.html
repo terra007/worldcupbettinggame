@@ -811,7 +811,7 @@ function applyStaticLang(){
   var ng=$("#nameGo");
   if(ng&&!ng.disabled) ng.textContent=t("let_me_in");
   $("#nameInput").placeholder=t("name_ph");
-  $("#pwInput").placeholder=t("pw_ph");
+  var pwEl=$("#pwInput"); if(pwEl) pwEl.placeholder=t("pw_ph");
   $("#modalH3").innerHTML=th("modal_h3");
   $("#modalP").innerHTML=t("modal_p");
   updateTabLabels();
