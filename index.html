@@ -1187,9 +1187,9 @@ function bindCards(root){
       if(isNaN(h)||isNaN(a)||h<0||a<0){toast(t("toast_enter_both_scores"));return;}
       btn.disabled=true; btn.textContent=t("saving_btn");
       try{
+        await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,playerToken:myToken,matchId:id,h:h,a:a});
         myBets[id]={h:h,a:a};
         if(!allBets[me])allBets[me]={};allBets[me][id]={h:h,a:a};
-        await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,playerToken:myToken,matchId:id,h:h,a:a});
         btn.classList.add("saved"); btn.textContent=t("saved_btn");
         toast(t("toast_prediction_saved"));
       }catch(e){
