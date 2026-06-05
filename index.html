@@ -1189,16 +1189,38 @@ function bindCards(root){
       var prev=myBets[id];
       myBets[id]={h:h,a:a};
       if(!allBets[me])allBets[me]={};allBets[me][id]={h:h,a:a};
+      var saved=false, saveErr=null;
       try{
-        await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,playerToken:myToken,matchId:id,h:h,a:a});
-        btn.classList.add("saved"); btn.textContent=t("saved_btn");
-        toast(t("toast_prediction_saved"));
-      }catch(e){
-        if(prev) myBets[id]=prev; else delete myBets[id];
-        if(allBets[me]) delete allBets[me][id];
-        toast(errMsg(e)||t("toast_couldnt_save"));
-        btn.textContent=t("save_btn");
-      }finally{btn.disabled=false;}
+        try{
+          await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,playerToken:myToken,matchId:id,h:h,a:a});
+          saved=true;
+        }catch(e){
+          var tokenErr=e.message&&(e.message.includes("Invalid token")||e.message.includes("Player not found"));
+          if(tokenErr){
+            // Token is stale or player missing — re-register then retry once
+            pset("token",null); myToken=null;
+            var tok=genUUID();
+            var reg=await apiPost({action:"register",name:me,token:tok});
+            myToken=reg.token||tok; pset("token",myToken);
+            await apiPost({action:"saveBet",poolId:currentPool.id,playerName:me,playerToken:myToken,matchId:id,h:h,a:a});
+            saved=true;
+          } else {
+            throw e;
+          }
+        }
+      }catch(err){saveErr=err;}
+      finally{
+        btn.disabled=false;
+        if(saved){
+          btn.classList.add("saved"); btn.textContent=t("saved_btn");
+          toast(t("toast_prediction_saved"));
+        } else {
+          if(prev) myBets[id]=prev; else delete myBets[id];
+          if(allBets[me]) delete allBets[me][id];
+          btn.textContent=t("save_btn");
+          toast(errMsg(saveErr)||t("toast_couldnt_save"));
+        }
+      }
     };
   });
 }
