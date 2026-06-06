@@ -60,3 +60,18 @@ create table if not exists results (
   away_score int  not null,
   primary key (pool_id, match_id)
 );
+
+create table if not exists bonus_picks (
+  pool_id     text not null references pools(id) on delete cascade,
+  player_name text not null,
+  question_id text not null,
+  answer      text not null,
+  primary key (pool_id, player_name, question_id)
+);
+
+create table if not exists bonus_results (
+  pool_id     text not null references pools(id) on delete cascade,
+  question_id text not null,
+  answer      text not null,
+  primary key (pool_id, question_id)
+);

@@ -128,6 +128,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ bets: all });
       }
 
+      if (action === "bonusPicks") {
+        const rows = await sql`SELECT player_name, question_id, answer FROM bonus_picks WHERE pool_id = ${poolId}`;
+        const picks: Record<string, Record<string, string>> = {};
+        rows.forEach(r => {
+          const name = r.player_name as string;
+          if (!picks[name]) picks[name] = {};
+          picks[name][r.question_id as string] = r.answer as string;
+        });
+        return res.status(200).json({ picks });
+      }
+
+      if (action === "bonusResult") {
+        const rows = await sql`SELECT question_id, answer FROM bonus_results WHERE pool_id = ${poolId}`;
+        const results: Record<string, string> = {};
+        rows.forEach(r => { results[r.question_id as string] = r.answer as string; });
+        return res.status(200).json({ results });
+      }
+
       // All bets without kickoff filter — used for the Pool Picks overview tab
       if (action === "poolbets") {
         const rows = await sql`
@@ -261,6 +279,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           VALUES (${poolId}, ${playerName}, ${matchId}, ${h}, ${a})
           ON CONFLICT (pool_id, player_name, match_id)
           DO UPDATE SET home_score = ${h}, away_score = ${a}`;
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "saveBonusPick") {
+        const { poolId, playerName, playerToken, questionId, answer } =
+          body as { poolId: string; playerName: string; playerToken: string; questionId: string; answer: string };
+        const player = await sql`SELECT token FROM players WHERE name = ${playerName}`;
+        if (!player.length) return res.status(404).json({ error: "Player not found" });
+        if (player[0].token !== playerToken) return res.status(403).json({ error: "Invalid token — reload the app" });
+        const lockTime = KICKOFFS["m01"];
+        if (lockTime && Date.now() >= lockTime) return res.status(403).json({ error: "Bonus pick locked — tournament has started" });
+        await sql`
+          INSERT INTO bonus_picks (pool_id, player_name, question_id, answer)
+          VALUES (${poolId}, ${playerName}, ${questionId}, ${answer})
+          ON CONFLICT (pool_id, player_name, question_id) DO UPDATE SET answer = ${answer}`;
+        return res.status(200).json({ ok: true });
+      }
+
+      if (action === "setBonusResult") {
+        const { poolId, code, questionId, answer } =
+          body as { poolId: string; code: string; questionId: string; answer: string };
+        const ok = await sql`SELECT id FROM pools WHERE id = ${poolId} AND organizer_code = ${code}`;
+        if (!ok.length) return res.status(403).json({ error: "Wrong organizer code" });
+        await sql`
+          INSERT INTO bonus_results (pool_id, question_id, answer)
+          VALUES (${poolId}, ${questionId}, ${answer})
+          ON CONFLICT (pool_id, question_id) DO UPDATE SET answer = ${answer}`;
         return res.status(200).json({ ok: true });
       }
 

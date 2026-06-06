@@ -136,6 +136,10 @@
   .tips-label{width:100%;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);font-weight:800;margin-bottom:2px}
   .tip-chip{display:inline-flex;align-items:center;gap:5px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:12px}
   .tip-chip.mine{border-color:var(--line2);background:var(--panel)}
+  .bonus-card{border-color:rgba(255,210,60,.35);background:linear-gradient(180deg,rgba(255,210,60,.07),rgba(255,210,60,.02));}
+  .bonus-badge{font-family:var(--display);font-size:13px;background:var(--gold);color:#06130d;padding:2px 9px;border-radius:6px;letter-spacing:.04em;flex-shrink:0}
+  .bonus-sel{width:100%;margin-top:10px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-family:var(--body);font-weight:700;font-size:14px;border-radius:10px;padding:10px 12px;appearance:none;cursor:pointer}
+  .bonus-sel:focus{outline:none;border-color:var(--gold)}
   .tip-chip .tip-nm{color:var(--mut);font-weight:700;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .tip-chip .tip-sc{font-family:var(--display);font-size:13px}
   .tip-chip .tip-no{color:var(--mut2)}
@@ -381,6 +385,13 @@ de:{
   pooltips_no_bets_yet:"Noch keine Tipps für gespielte Partien.",
   pooltips_future_locked:"Tipps werden erst nach Anstoß sichtbar.",
   pick_lab:"Tipp",
+  bonus_champion_q:"Wer wird Weltmeister?",
+  bonus_pick_team:"Team auswählen…",
+  bonus_saved:"Zusatztipp gespeichert!",
+  bonus_pick_required:"Bitte ein Team auswählen.",
+  bonus_champion_result:"Weltmeister",
+  h2_bonus_q:"Zusatz{em}frage{/em}",
+  bonus_q_p_org:"Sobald der Weltmeister feststeht, hier eintragen — alle +10 Punkte werden sofort gutgeschrieben.",
   h2_how_points:"Wie {em}Punkte{/em} funktionieren",
   rules_pts_p:"Tippe das genaue Endergebnis (90 Min. + Nachspielzeit, ohne Verlängerung oder Elfmeter).",
   rule_exact_main:"Exaktes Ergebnis",
@@ -549,6 +560,13 @@ en:{
   pooltips_no_bets_yet:"No picks yet for played matches.",
   pooltips_future_locked:"Picks become visible after kickoff.",
   pick_lab:"Pick",
+  bonus_champion_q:"Who will be World Champion?",
+  bonus_pick_team:"Pick a team…",
+  bonus_saved:"Bonus pick saved!",
+  bonus_pick_required:"Please select a team.",
+  bonus_champion_result:"World Champion",
+  h2_bonus_q:"Bonus {em}question{/em}",
+  bonus_q_p_org:"Once the champion is decided, set it here — +10 points are awarded immediately to correct picks.",
   pending_lbl:"Pending",
   h2_how_points:"How {em}points{/em} work",
   rules_pts_p:"Predict the exact full-time score (90 min + stoppage, before extra time or penalties).",
@@ -675,6 +693,9 @@ function pset(k,v){try{localStorage.setItem("wm26_"+k,JSON.stringify(v));}catch(
 var ISO={Mexico:"mx","South Africa":"za",USA:"us",Paraguay:"py",Qatar:"qa",Switzerland:"ch",Brazil:"br",Morocco:"ma",Haiti:"ht",Scotland:"gb-sct",Germany:"de",Curacao:"cw",Netherlands:"nl",Japan:"jp","Ivory Coast":"ci",Ecuador:"ec",Spain:"es","Cape Verde":"cv",Belgium:"be",Egypt:"eg","Saudi Arabia":"sa",Uruguay:"uy",Iran:"ir","New Zealand":"nz",France:"fr",Senegal:"sn",Argentina:"ar",Algeria:"dz",Austria:"at",Jordan:"jo",England:"gb-eng",Croatia:"hr",Ghana:"gh",Panama:"pa",Uzbekistan:"uz",Colombia:"co","South Korea":"kr",Canada:"ca",Tunisia:"tn",Norway:"no",Portugal:"pt",Australia:"au"};
 var TEAM_DE={Mexico:"Mexiko","South Africa":"Südafrika",Qatar:"Katar",Switzerland:"Schweiz",Brazil:"Brasilien",Morocco:"Marokko",Scotland:"Schottland",Germany:"Deutschland",Curacao:"Curaçao",Netherlands:"Niederlande","Ivory Coast":"Elfenbeinküste",Spain:"Spanien","Cape Verde":"Kap Verde",Belgium:"Belgien",Egypt:"Ägypten","Saudi Arabia":"Saudi-Arabien","New Zealand":"Neuseeland",France:"Frankreich",Argentina:"Argentinien",Algeria:"Algerien",Austria:"Österreich",Jordan:"Jordanien",Croatia:"Kroatien",Uzbekistan:"Usbekistan",Colombia:"Kolumbien","South Korea":"Südkorea",Canada:"Kanada",Tunisia:"Tunesien",Norway:"Norwegen",Australia:"Australien"};
 Object.keys(TEAM_DE).forEach(function(en){ISO[TEAM_DE[en]]=ISO[en];});
+var GRP_KEYS=["A","B","C","D","E","F","G","H","I","J","K","L"];
+var WM_TEAMS=(function(){var t=[];MATCHES.forEach(function(m){if(GRP_KEYS.indexOf(m.grp)!==-1){if(t.indexOf(m.h)===-1)t.push(m.h);if(t.indexOf(m.a)===-1)t.push(m.a);}});return t.sort();})();
+function rnTeam(n){return(lang==="de"&&TEAM_DE[n])||n;}
 var MATCHES=[
   ["m01","A","Mexico","South Africa","2026-06-11T21:00:00Z"],
   ["m02","D","USA","Paraguay","2026-06-13T04:00:00Z"],
@@ -770,6 +791,7 @@ var roster=[], myBets={}, results={}, allBets={}, matchOverrides={};
 var myPools=[], creators=[], isCreator=false;
 var curTab="matches", grpFilter="ALL", hideStarted=false, teamFilter="";
 var poolTipsPlayer=null;
+var bonusPicks={}, bonusResult={};
 var cdInterval=null, tz="";
 
 /* ── Helpers ──────────────────────────────────────────────── */
@@ -1086,9 +1108,11 @@ async function enterPool(){
     apiGet({action:"bets",poolId:currentPool.id,player:me}).then(function(d){return d.bets||{};}).catch(function(){return{};}),
     apiGet({action:"results",poolId:currentPool.id}).then(function(d){return d.results||{};}).catch(function(){return{};}),
     apiGet({action:"allbets",poolId:currentPool.id}).then(function(d){return d.bets||{};}).catch(function(){return{};}),
-    apiGet({action:"matchNames",poolId:currentPool.id}).then(function(d){return d.names||{};}).catch(function(){return{};})
+    apiGet({action:"matchNames",poolId:currentPool.id}).then(function(d){return d.names||{};}).catch(function(){return{};}),
+    apiGet({action:"bonusPicks",poolId:currentPool.id}).then(function(d){return d.picks||{};}).catch(function(){return{};}),
+    apiGet({action:"bonusResult",poolId:currentPool.id}).then(function(d){return d.results||{};}).catch(function(){return{};})
   ]);
-  roster=loaded[0]; myBets=loaded[1]; results=loaded[2]; allBets=loaded[3]; matchOverrides=loaded[4];
+  roster=loaded[0]; myBets=loaded[1]; results=loaded[2]; allBets=loaded[3]; matchOverrides=loaded[4]; bonusPicks=loaded[5]; bonusResult=loaded[6];
   renderMeBar();
   curTab="matches";
   updateTabLabels();
@@ -1128,12 +1152,84 @@ function tickCountdown(){
   else{clk.classList.remove("small");clk.textContent=String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(ss).padStart(2,"0");}
 }
 
+/* ── Bonus card ───────────────────────────────────────────── */
+function renderBonusCard(){
+  var now=Date.now();
+  var locked=now>=KICKOFFS["m01"];
+  var myPick=(bonusPicks[me]||{}).champion||"";
+  var correct=bonusResult.champion||"";
+  var h='<div class="card bonus-card" style="margin-bottom:18px">';
+  h+='<div class="meta" style="flex-wrap:wrap;gap:8px"><span class="bonus-badge">+10</span>';
+  h+='<span style="font-weight:800;font-size:14px">'+esc(t("bonus_champion_q"))+'</span>';
+  h+='<span class="status '+(locked?"locked":"open")+'" style="margin-left:auto">'+esc(locked?t("status_locked"):t("status_open"))+'</span></div>';
+  if(!locked&&me){
+    h+='<select class="bonus-sel" id="bonusChampSel">';
+    h+='<option value="">'+esc(t("bonus_pick_team"))+'</option>';
+    WM_TEAMS.forEach(function(team){
+      h+='<option value="'+esc(team)+'"'+(team===myPick?" selected":"")+'>'+esc(rnTeam(team))+'</option>';
+    });
+    h+='</select>';
+    h+='<div style="margin-top:8px;display:flex;justify-content:flex-end">';
+    h+='<button class="btn save'+(myPick?" saved":"")+'" id="bonusChampSave" style="padding:8px 20px">'+(myPick?t("saved_btn"):t("save_btn"))+'</button></div>';
+  } else if(!me&&!locked){
+    h+='<div class="result-line"><span class="nobet">'+esc(t("pick_name_notice"))+'</span></div>';
+  } else {
+    h+='<div class="result-line" style="margin-top:8px">';
+    if(myPick){
+      h+='<span class="pill you"><span class="lab">'+esc(t("your_tip_lab"))+'</span>'+fl(myPick)+" "+esc(rnTeam(myPick))+'</span>';
+      if(correct){h+=myPick===correct?'<span class="pts p3">+10</span>':'<span class="pts p0">+0</span>';}
+    } else {
+      h+='<span class="nobet">'+esc(t("no_prediction"))+'</span>';
+    }
+    if(correct){h+='<span class="pill final" style="margin-left:8px"><span class="lab">'+esc(t("bonus_champion_result"))+'</span>'+fl(correct)+" "+esc(rnTeam(correct))+'</span>';}
+    h+='</div>';
+    if(roster.length>1){
+      h+='<div class="pool-tips"><span class="tips-label">'+esc(t("pool_picks_lab"))+'</span>';
+      roster.forEach(function(name){
+        var pick=(bonusPicks[name]||{}).champion||"";
+        var isMine=name===me;
+        h+='<span class="tip-chip'+(isMine?" mine":"")+'"><span class="tip-nm">'+esc(isMine?t("you_lbl"):name)+'</span>';
+        h+=pick?'<span class="tip-sc">'+fl(pick)+" "+esc(rnTeam(pick))+'</span>':'<span class="tip-no">—</span>';
+        if(pick&&correct){h+=pick===correct?'<span class="pts p3">+10</span>':'<span class="pts p0">+0</span>';}
+        h+='</span>';
+      });
+      h+='</div>';
+    }
+  }
+  h+='</div>';
+  return h;
+}
+function bindBonusCard(root){
+  var sel=root.querySelector("#bonusChampSel");
+  var btn=root.querySelector("#bonusChampSave");
+  if(!sel||!btn)return;
+  sel.onchange=function(){btn.classList.remove("saved");btn.textContent=t("save_btn");};
+  btn.onclick=async function(){
+    var answer=sel.value;
+    if(!answer){toast(t("bonus_pick_required"));return;}
+    btn.disabled=true;btn.textContent=t("saving_btn");
+    var prev=(bonusPicks[me]||{}).champion;
+    if(!bonusPicks[me])bonusPicks[me]={};
+    bonusPicks[me].champion=answer;
+    try{
+      await apiPost({action:"saveBonusPick",poolId:currentPool.id,playerName:me,playerToken:myToken,questionId:"champion",answer:answer});
+      btn.classList.add("saved");btn.textContent=t("saved_btn");
+      toast(t("bonus_saved"));
+    }catch(e){
+      if(prev)bonusPicks[me].champion=prev;else delete bonusPicks[me].champion;
+      btn.textContent=t("save_btn");
+      toast(errMsg(e)||t("toast_couldnt_save"));
+    }finally{btn.disabled=false;}
+  };
+}
+
 /* ── Matches ──────────────────────────────────────────────── */
 function renderMatches(){
   var v=$("#view-matches"),now=Date.now();
   var hadSearchFocus=document.activeElement&&document.activeElement.classList.contains("team-search");
   var groups=["ALL","A","B","C","D","E","F","G","H","I","J","K","L","R32","R16","QF","SF","3P","FIN"];
-  var html='<div class="filters">';
+  var html=currentPool?renderBonusCard():"";
+  html+='<div class="filters">';
   var KO={R32:t("ko_R32"),R16:t("ko_R16"),QF:t("ko_QF"),SF:t("ko_SF"),"3P":t("ko_3P"),FIN:t("ko_FIN")};
   groups.forEach(function(g){html+='<button class="chip'+(grpFilter===g?" active":"")+'" data-g="'+g+'">'+(g==="ALL"?t("all_filter"):(KO[g]||t("grp_prefix")+g))+'</button>';});
   html+='<label class="toggle"><input type="checkbox" id="hideChk"'+(hideStarted?" checked":"")+'> '+esc(t("hide_started"))+'</label></div>';
@@ -1161,6 +1257,7 @@ function renderMatches(){
     if(hadSearchFocus){ts.focus();ts.setSelectionRange(ts.value.length,ts.value.length);}
   }
   bindCards(v);
+  bindBonusCard(v);
 }
 
 function matchCard(m,now){
@@ -1270,6 +1367,7 @@ async function renderBoard(){
         pts+=p;if(p===3)exact++;played++;
       }
     });
+    if(bonusResult.champion&&(bonusPicks[name]||{}).champion===bonusResult.champion)pts+=10;
     rows.push({name:name,pts:pts,exact:exact,played:played});
   });
   rows.sort(function(x,y){return y.pts-x.pts||y.exact-x.exact||x.name.localeCompare(y.name);});
@@ -1306,12 +1404,25 @@ function renderMyPicks(){
     if(bet&&res){p=scorePoints(bet,res);totalPts+=p;if(p===3)exact++;played++;}
     cards.push({m:m,bet:bet,res:res,p:p});
   });
+  var myBonusPick=(bonusPicks[me]||{}).champion||"";
+  var bonusCorrect=bonusResult.champion||"";
+  var bonusPts=(bonusCorrect&&myBonusPick===bonusCorrect)?10:0;
+  totalPts+=bonusPts;
   var html='';
   html+='<div class="mypicks-summary">'+
     '<div class="mps-item"><div class="mps-val">'+totalPts+'</div><div class="mps-lab">'+esc(t("pts_lab"))+'</div></div>'+
     '<div class="mps-item"><div class="mps-val">'+exact+'</div><div class="mps-lab">'+esc(t("exact_lab"))+'</div></div>'+
     '<div class="mps-item"><div class="mps-val">'+played+' / '+Object.keys(myBets).length+'</div><div class="mps-lab">'+esc(t("scored_picks_lab"))+'</div></div>'+
     '</div>';
+  html+='<div class="card bonus-card" style="margin-bottom:14px"><div class="meta"><span class="bonus-badge">+10</span><span style="font-weight:800;font-size:14px">'+esc(t("bonus_champion_q"))+'</span></div>';
+  html+='<div class="result-line" style="margin-top:6px">';
+  if(myBonusPick){
+    html+='<span class="pill you"><span class="lab">'+esc(t("your_tip_lab"))+'</span>'+fl(myBonusPick)+" "+esc(rnTeam(myBonusPick))+'</span>';
+    if(bonusCorrect){html+=bonusPts?'<span class="pts p3">+10</span>':'<span class="pts p0">+0</span>';}
+    else{html+='<span class="mpc-pending">'+esc(t("pending_lbl"))+'</span>';}
+  }else{html+='<span class="nobet">'+esc(t("no_prediction"))+'</span>';}
+  if(bonusCorrect){html+='<span class="pill final"><span class="lab">'+esc(t("bonus_champion_result"))+'</span>'+fl(bonusCorrect)+" "+esc(rnTeam(bonusCorrect))+'</span>';}
+  html+='</div></div>';
   if(!cards.length){
     html+='<div class="empty"><div class="big">'+esc(t("nothing_yet_big"))+'</div>'+esc(t("nothing_yet_sub"))+'</div>';
     v.innerHTML=html; return;
@@ -1374,11 +1485,23 @@ function _renderPoolTipsUI(v,allPoolBets){
     var bet=bets[m.id],res=results[m.id];
     if(bet&&res){var p=scorePoints(bet,res);totalPts+=p;if(p===3)exact++;played++;}
   });
+  var ptBonus=(bonusResult.champion&&(bonusPicks[poolTipsPlayer]||{}).champion===bonusResult.champion)?10:0;
   html+='<div class="mypicks-summary">'+
-    '<div class="mps-item"><div class="mps-val">'+totalPts+'</div><div class="mps-lab">'+esc(t("pts_lab"))+'</div></div>'+
+    '<div class="mps-item"><div class="mps-val">'+(totalPts+ptBonus)+'</div><div class="mps-lab">'+esc(t("pts_lab"))+'</div></div>'+
     '<div class="mps-item"><div class="mps-val">'+exact+'</div><div class="mps-lab">'+esc(t("exact_lab"))+'</div></div>'+
     '<div class="mps-item"><div class="mps-val">'+played+' / '+totalBets+'</div><div class="mps-lab">'+esc(t("scored_picks_lab"))+'</div></div>'+
     '</div>';
+  var ptPick=(bonusPicks[poolTipsPlayer]||{}).champion||"";
+  var ptCorrect=bonusResult.champion||"";
+  html+='<div class="card bonus-card" style="margin-bottom:14px"><div class="meta"><span class="bonus-badge">+10</span><span style="font-weight:800;font-size:14px">'+esc(t("bonus_champion_q"))+'</span></div>';
+  html+='<div class="result-line" style="margin-top:6px">';
+  if(ptPick){
+    html+='<span class="pill you"><span class="lab">'+esc(t("pick_lab"))+'</span>'+fl(ptPick)+" "+esc(rnTeam(ptPick))+'</span>';
+    if(ptCorrect){html+=ptPick===ptCorrect?'<span class="pts p3">+10</span>':'<span class="pts p0">+0</span>';}
+    else{html+='<span class="mpc-pending">'+esc(t("pending_lbl"))+'</span>';}
+  }else{html+='<span class="nobet">'+esc(t("no_prediction"))+'</span>';}
+  if(ptCorrect){html+='<span class="pill final"><span class="lab">'+esc(t("bonus_champion_result"))+'</span>'+fl(ptCorrect)+" "+esc(rnTeam(ptCorrect))+'</span>';}
+  html+='</div></div>';
   var cards=[];
   MATCHES.forEach(function(m){
     var bet=bets[m.id],res=results[m.id];
@@ -1491,6 +1614,19 @@ function renderOrg(){
       '</div>';
   });
   html+='</div>';
+  var curChamp=bonusResult.champion||"";
+  html+='<div class="pnl bonus-card"><h2>'+th("h2_bonus_q")+'</h2>'+
+    '<p>'+esc(t("bonus_q_p_org"))+'</p>'+
+    '<div class="row-in" style="margin-top:10px">'+
+    '<select class="txt" id="bonusOrgSel" style="flex:1">'+
+    '<option value="">'+esc(t("bonus_pick_team"))+'</option>';
+  WM_TEAMS.forEach(function(team){
+    html+='<option value="'+esc(team)+'"'+(team===curChamp?" selected":"")+'>'+esc(rnTeam(team))+'</option>';
+  });
+  html+='</select>'+
+    '<button class="btn'+(curChamp?" saved":"")+'" id="bonusOrgSave">'+(curChamp?t("saved_btn"):t("save_btn"))+'</button></div>'+
+    (curChamp?'<div class="hint" style="margin-top:6px">'+esc(t("bonus_champion_result"))+': '+fl(curChamp)+" "+esc(rnTeam(curChamp))+'</div>':"")+
+    '</div>';
   html+='<div class="pnl"><h2>'+th("h2_log_results")+'</h2>'+
     '<p>'+esc(t("log_results_p"))+'</p></div>';
   var lastDay="";
@@ -1560,6 +1696,22 @@ function renderOrg(){
       delete results[id]; toast(t("toast_cleared")); renderOrg();
     };
   });
+  var orgChampSel=$("#bonusOrgSel"),orgChampSave=$("#bonusOrgSave");
+  if(orgChampSel&&orgChampSave){
+    orgChampSel.onchange=function(){orgChampSave.classList.remove("saved");orgChampSave.textContent=t("save_btn");};
+    orgChampSave.onclick=async function(){
+      var answer=orgChampSel.value;if(!answer){toast(t("bonus_pick_required"));return;}
+      orgChampSave.disabled=true;orgChampSave.textContent=t("saving_btn");
+      try{
+        await apiPost({action:"setBonusResult",poolId:currentPool.id,code:orgCode,questionId:"champion",answer:answer});
+        bonusResult.champion=answer;
+        orgChampSave.classList.add("saved");orgChampSave.textContent=t("saved_btn");
+        toast(t("bonus_saved"));
+        renderOrg();
+      }catch(e){toast(errMsg(e)||t("toast_couldnt_save"));}
+      finally{orgChampSave.disabled=false;}
+    };
+  }
 }
 
 /* ── Tabs ─────────────────────────────────────────────────── */
