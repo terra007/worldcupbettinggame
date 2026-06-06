@@ -1093,7 +1093,7 @@ async function enterPool(){
   curTab="matches";
   updateTabLabels();
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("active",t.dataset.tab==="matches");});
-  poolTipsPlayer=null;
+  poolTipsPlayer=null; poolBetsCache={};
   ["matches","mypicks","pooltips","board","rules","invite","org"].forEach(function(k){
     $("#view-"+k).style.display=(k==="matches")?"block":"none";
   });
@@ -1338,7 +1338,8 @@ function renderMyPicks(){
 }
 
 /* ── Pool Picks ───────────────────────────────────────────── */
-function renderPoolTips(){
+var poolBetsCache={};
+async function renderPoolTips(){
   var v=$("#view-pooltips");
   if(!roster.length){
     v.innerHTML='<div class="empty"><div class="big">'+esc(t("no_players_big"))+'</div>'+esc(t("share_invite"))+'</div>';
@@ -1347,6 +1348,16 @@ function renderPoolTips(){
   if(!poolTipsPlayer||roster.indexOf(poolTipsPlayer)===-1){
     poolTipsPlayer=roster.indexOf(me)!==-1?me:roster[0];
   }
+  // Load all bets (no kickoff restriction) once per pool entry
+  if(!poolBetsCache[currentPool.id]){
+    v.innerHTML='<div class="empty"><div class="big">'+esc(t("loading_big"))+'</div></div>';
+    var d=await apiGet({action:"poolbets",poolId:currentPool.id}).catch(function(){return{bets:{}};});
+    poolBetsCache[currentPool.id]=d.bets||{};
+  }
+  var allPoolBets=poolBetsCache[currentPool.id];
+  _renderPoolTipsUI(v,allPoolBets);
+}
+function _renderPoolTipsUI(v,allPoolBets){
   var html='';
   html+='<div style="margin-bottom:4px;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--mut);font-weight:800">'+esc(t("pooltips_select_player"))+'</div>';
   html+='<div class="filters" style="margin-bottom:16px">';
@@ -1356,8 +1367,7 @@ function renderPoolTips(){
     html+='<button class="chip'+(active?' active':'')+'" data-pt-player="'+esc(name)+'">'+esc(label)+'</button>';
   });
   html+='</div>';
-  var bets=(poolTipsPlayer===me)?myBets:(allBets[poolTipsPlayer]||{});
-  var now=Date.now();
+  var bets=(poolTipsPlayer===me)?myBets:(allPoolBets[poolTipsPlayer]||{});
   var totalPts=0,exact=0,played=0,totalBets=Object.keys(bets).length;
   MATCHES.forEach(function(m){
     var bet=bets[m.id],res=results[m.id];
@@ -1372,13 +1382,12 @@ function renderPoolTips(){
   MATCHES.forEach(function(m){
     var bet=bets[m.id],res=results[m.id];
     if(!bet&&!res)return;
-    if(poolTipsPlayer!==me&&now<m.kt)return;
     cards.push({m:m,bet:bet,res:res});
   });
   if(!cards.length){
-    html+='<div class="empty"><div class="big">'+esc(t("nothing_yet_big"))+'</div>'+esc(t("pooltips_future_locked"))+'</div>';
+    html+='<div class="empty"><div class="big">'+esc(t("nothing_yet_big"))+'</div>'+esc(t("nothing_yet_sub"))+'</div>';
     v.innerHTML=html;
-    v.querySelectorAll("[data-pt-player]").forEach(function(chip){chip.onclick=function(){poolTipsPlayer=chip.getAttribute("data-pt-player");renderPoolTips();};});
+    v.querySelectorAll("[data-pt-player]").forEach(function(chip){chip.onclick=function(){poolTipsPlayer=chip.getAttribute("data-pt-player");_renderPoolTipsUI(v,poolBetsCache[currentPool.id]||{});};});
     return;
   }
   var lastDay='';
@@ -1401,7 +1410,7 @@ function renderPoolTips(){
     html+='</div></div>';
   });
   v.innerHTML=html;
-  v.querySelectorAll("[data-pt-player]").forEach(function(chip){chip.onclick=function(){poolTipsPlayer=chip.getAttribute("data-pt-player");renderPoolTips();};});
+  v.querySelectorAll("[data-pt-player]").forEach(function(chip){chip.onclick=function(){poolTipsPlayer=chip.getAttribute("data-pt-player");_renderPoolTipsUI(v,poolBetsCache[currentPool.id]||{});};});
 }
 
 /* ── Rules ────────────────────────────────────────────────── */

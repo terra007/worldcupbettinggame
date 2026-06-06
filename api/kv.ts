@@ -128,6 +128,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ bets: all });
       }
 
+      // All bets without kickoff filter — used for the Pool Picks overview tab
+      if (action === "poolbets") {
+        const rows = await sql`
+          SELECT player_name, match_id, home_score, away_score FROM bets WHERE pool_id = ${poolId}`;
+        const all: AllBetsMap = {};
+        rows.forEach(r => {
+          const name = r.player_name as string;
+          if (!all[name]) all[name] = {};
+          all[name][r.match_id as string] = { h: r.home_score as number, a: r.away_score as number };
+        });
+        return res.status(200).json({ bets: all });
+      }
+
       if (action === "matchNames") {
         const rows = await sql`
           SELECT match_id, home, away FROM match_names WHERE pool_id = ${poolId}`;
