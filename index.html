@@ -293,6 +293,7 @@ de:{
   pools_prefix:"Pools:",
   pool_prefix:"Pool:",
   cd_lab:"Anstoß-Countdown · nächstes Spiel",
+  cd_d:"T",cd_h:"Std",cd_m:"Min",
   tz_default:"Lokale Zeitzone",
   tz_foot:"Anstoßzeiten in {{tz}}. Tipps werden bei Spielbeginn gesperrt.",
   modal_h3:"POOL {em}BEITRETEN{/em}",
@@ -461,6 +462,7 @@ en:{
   pools_prefix:"Pools:",
   pool_prefix:"Pool:",
   cd_lab:"Kickoff countdown · next match",
+  cd_d:"d",cd_h:"h",cd_m:"m",
   tz_default:"your local timezone",
   tz_foot:"Kickoff times in {{tz}}. Predictions lock at kickoff.",
   modal_h3:"JOIN THE {em}POOL{/em}",
@@ -1121,7 +1123,7 @@ function tickCountdown(){
   var diff=Math.max(0,nxt.kt-now),s=Math.floor(diff/1000);
   var d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),ss=s%60;
   var clk=$("#cdClock");
-  if(d>0){clk.classList.add("small");clk.textContent=d+"d "+h+"h "+m+"m";}
+  if(d>0){clk.classList.add("small");clk.textContent=d+t("cd_d")+" "+h+t("cd_h")+" "+m+t("cd_m");}
   else{clk.classList.remove("small");clk.textContent=String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(ss).padStart(2,"0");}
 }
 
