@@ -1119,7 +1119,8 @@ function tickCountdown(){
   var cd=$("#cd");
   if(!nxt){cd.style.display="none";return;}
   cd.style.display="flex";
-  $("#cdName").innerHTML=fl(nxt.h)+" "+esc(nxt.h)+" v "+esc(nxt.a)+" "+fl(nxt.a);
+  var cdH=(lang==="de"&&TEAM_DE[nxt.h])||nxt.h,cdA=(lang==="de"&&TEAM_DE[nxt.a])||nxt.a;
+  $("#cdName").innerHTML=fl(nxt.h)+" "+esc(cdH)+" v "+esc(cdA)+" "+fl(nxt.a);
   var diff=Math.max(0,nxt.kt-now),s=Math.floor(diff/1000);
   var d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60),ss=s%60;
   var clk=$("#cdClock");
