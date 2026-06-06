@@ -245,6 +245,7 @@
     <nav class="tabs" id="tabs">
       <button class="tab active" data-tab="matches">Spiele</button>
       <button class="tab" data-tab="mypicks">Meine Tipps</button>
+      <button class="tab" data-tab="pooltips">Pool-Tipps</button>
       <button class="tab" data-tab="board">Rangliste</button>
       <button class="tab" data-tab="rules">Regeln</button>
       <button class="tab" data-tab="invite">Einladen</button>
@@ -252,6 +253,7 @@
     </nav>
     <section id="view-matches"></section>
     <section id="view-mypicks" style="display:none"></section>
+    <section id="view-pooltips" style="display:none"></section>
     <section id="view-board" style="display:none"></section>
     <section id="view-rules" style="display:none"></section>
     <section id="view-invite" style="display:none"></section>
@@ -304,6 +306,7 @@ de:{
   creating_lbl:"Erstellen…",
   tab_matches:"Spiele",
   tab_mypicks:"Meine Tipps",
+  tab_pooltips:"Pool-Tipps",
   tab_board:"Rangliste",
   tab_rules:"Regeln",
   tab_invite:"Einladen",
@@ -373,6 +376,10 @@ de:{
   your_pick_lab:"Dein Tipp",
   no_pick:"Kein Tipp",
   pending_lbl:"Ausstehend",
+  pooltips_select_player:"Spieler wählen:",
+  pooltips_no_bets_yet:"Noch keine Tipps für gespielte Partien.",
+  pooltips_future_locked:"Tipps werden erst nach Anstoß sichtbar.",
+  pick_lab:"Tipp",
   h2_how_points:"Wie {em}Punkte{/em} funktionieren",
   rules_pts_p:"Tippe das genaue Endergebnis (90 Min. + Nachspielzeit, ohne Verlängerung oder Elfmeter).",
   rule_exact_main:"Exaktes Ergebnis",
@@ -467,6 +474,7 @@ en:{
   creating_lbl:"Creating…",
   tab_matches:"Matches",
   tab_mypicks:"My Picks",
+  tab_pooltips:"Pool Picks",
   tab_board:"Leaderboard",
   tab_rules:"How it works",
   tab_invite:"Invite",
@@ -535,6 +543,10 @@ en:{
   scored_picks_lab:"Scored / Picks",
   your_pick_lab:"Your pick",
   no_pick:"No pick",
+  pooltips_select_player:"Select player:",
+  pooltips_no_bets_yet:"No picks yet for played matches.",
+  pooltips_future_locked:"Picks become visible after kickoff.",
+  pick_lab:"Pick",
   pending_lbl:"Pending",
   h2_how_points:"How {em}points{/em} work",
   rules_pts_p:"Predict the exact full-time score (90 min + stoppage, before extra time or penalties).",
@@ -753,6 +765,7 @@ var me=null, currentPool=null, orgUnlocked=false, orgCode="", myToken=null;
 var roster=[], myBets={}, results={}, allBets={}, matchOverrides={};
 var myPools=[], creators=[], isCreator=false;
 var curTab="matches", grpFilter="ALL", hideStarted=false, teamFilter="";
+var poolTipsPlayer=null;
 var cdInterval=null, tz="";
 
 /* ── Helpers ──────────────────────────────────────────────── */
@@ -795,7 +808,7 @@ function updateFoot(){
   $("#foot").innerHTML=t("tz_foot").replace("{{tz}}","<b>"+esc(tz)+"</b>");
 }
 function updateTabLabels(){
-  var keys={matches:"tab_matches",mypicks:"tab_mypicks",board:"tab_board",rules:"tab_rules",invite:"tab_invite",org:"tab_org"};
+  var keys={matches:"tab_matches",mypicks:"tab_mypicks",pooltips:"tab_pooltips",board:"tab_board",rules:"tab_rules",invite:"tab_invite",org:"tab_org"};
   document.querySelectorAll(".tab").forEach(function(tab){
     var k=keys[tab.dataset.tab];
     if(k) tab.textContent=t(k);
@@ -831,6 +844,7 @@ function setLang(l){
   if(currentPool){
     if(curTab==="matches") renderMatches();
     else if(curTab==="mypicks") renderMyPicks();
+    else if(curTab==="pooltips") renderPoolTips();
     else if(curTab==="board") renderBoard();
     else if(curTab==="rules") renderRules();
     else if(curTab==="invite") renderInvite();
@@ -1075,7 +1089,8 @@ async function enterPool(){
   curTab="matches";
   updateTabLabels();
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("active",t.dataset.tab==="matches");});
-  ["matches","mypicks","board","rules","invite","org"].forEach(function(k){
+  poolTipsPlayer=null;
+  ["matches","mypicks","pooltips","board","rules","invite","org"].forEach(function(k){
     $("#view-"+k).style.display=(k==="matches")?"block":"none";
   });
   renderMatches();
@@ -1318,6 +1333,73 @@ function renderMyPicks(){
   v.innerHTML=html;
 }
 
+/* ── Pool Picks ───────────────────────────────────────────── */
+function renderPoolTips(){
+  var v=$("#view-pooltips");
+  if(!roster.length){
+    v.innerHTML='<div class="empty"><div class="big">'+esc(t("no_players_big"))+'</div>'+esc(t("share_invite"))+'</div>';
+    return;
+  }
+  if(!poolTipsPlayer||roster.indexOf(poolTipsPlayer)===-1){
+    poolTipsPlayer=roster.indexOf(me)!==-1?me:roster[0];
+  }
+  var html='';
+  html+='<div style="margin-bottom:4px;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--mut);font-weight:800">'+esc(t("pooltips_select_player"))+'</div>';
+  html+='<div class="filters" style="margin-bottom:16px">';
+  roster.forEach(function(name){
+    var active=name===poolTipsPlayer;
+    var label=name===me?name+' ('+t("you_lbl")+')':name;
+    html+='<button class="chip'+(active?' active':'')+'" data-pt-player="'+esc(name)+'">'+esc(label)+'</button>';
+  });
+  html+='</div>';
+  var bets=(poolTipsPlayer===me)?myBets:(allBets[poolTipsPlayer]||{});
+  var now=Date.now();
+  var totalPts=0,exact=0,played=0,totalBets=Object.keys(bets).length;
+  MATCHES.forEach(function(m){
+    var bet=bets[m.id],res=results[m.id];
+    if(bet&&res){var p=scorePoints(bet,res);totalPts+=p;if(p===3)exact++;played++;}
+  });
+  html+='<div class="mypicks-summary">'+
+    '<div class="mps-item"><div class="mps-val">'+totalPts+'</div><div class="mps-lab">'+esc(t("pts_lab"))+'</div></div>'+
+    '<div class="mps-item"><div class="mps-val">'+exact+'</div><div class="mps-lab">'+esc(t("exact_lab"))+'</div></div>'+
+    '<div class="mps-item"><div class="mps-val">'+played+' / '+totalBets+'</div><div class="mps-lab">'+esc(t("scored_picks_lab"))+'</div></div>'+
+    '</div>';
+  var cards=[];
+  MATCHES.forEach(function(m){
+    var bet=bets[m.id],res=results[m.id];
+    if(!bet&&!res)return;
+    if(poolTipsPlayer!==me&&now<m.kt)return;
+    cards.push({m:m,bet:bet,res:res});
+  });
+  if(!cards.length){
+    html+='<div class="empty"><div class="big">'+esc(t("nothing_yet_big"))+'</div>'+esc(t("pooltips_future_locked"))+'</div>';
+    v.innerHTML=html;
+    v.querySelectorAll("[data-pt-player]").forEach(function(chip){chip.onclick=function(){poolTipsPlayer=chip.getAttribute("data-pt-player");renderPoolTips();};});
+    return;
+  }
+  var lastDay='';
+  cards.forEach(function(c){
+    var dk=dayKey(c.m.kt);
+    if(dk!==lastDay){html+='<div class="day-h">'+fmtDay(c.m.kt)+'</div>';lastDay=dk;}
+    html+='<div class="mypick-card">'+
+      '<div class="mpc-teams">'+fl(rn(c.m,'h'))+'<span class="mpc-name">'+esc(rn(c.m,'h'))+'</span>'+
+      '<span class="mpc-vs">VS</span>'+
+      '<span class="mpc-name">'+esc(rn(c.m,'a'))+'</span>'+fl(rn(c.m,'a'))+'</div>'+
+      '<div class="mpc-row">';
+    if(c.bet){html+='<span class="pill you"><span class="lab">'+esc(t("pick_lab"))+'</span>'+esc(c.bet.h)+'–'+esc(c.bet.a)+'</span>';}
+    else{html+='<span class="nobet">'+esc(t("no_pick"))+'</span>';}
+    if(c.res){
+      html+='<span class="pill final"><span class="lab">'+esc(t("result_lab"))+'</span>'+esc(c.res.h)+'–'+esc(c.res.a)+'</span>';
+      if(c.bet){var p=scorePoints(c.bet,c.res);html+='<span class="pts p'+p+'">+'+p+'</span>';}
+    }else{
+      html+='<span class="mpc-pending">'+esc(t("pending_lbl"))+'</span>';
+    }
+    html+='</div></div>';
+  });
+  v.innerHTML=html;
+  v.querySelectorAll("[data-pt-player]").forEach(function(chip){chip.onclick=function(){poolTipsPlayer=chip.getAttribute("data-pt-player");renderPoolTips();};});
+}
+
 /* ── Rules ────────────────────────────────────────────────── */
 function renderRules(){
   $("#view-rules").innerHTML=
@@ -1471,11 +1553,12 @@ $("#tabs").addEventListener("click",function(e){
   var b=e.target.closest(".tab");if(!b)return;
   curTab=b.getAttribute("data-tab");
   document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("active",t===b);});
-  ["matches","mypicks","board","rules","invite","org"].forEach(function(k){
+  ["matches","mypicks","pooltips","board","rules","invite","org"].forEach(function(k){
     $("#view-"+k).style.display=(k===curTab)?"block":"none";
   });
   if(curTab==="matches") renderMatches();
   if(curTab==="mypicks") renderMyPicks();
+  if(curTab==="pooltips") renderPoolTips();
   if(curTab==="board") renderBoard();
   if(curTab==="rules") renderRules();
   if(curTab==="invite") renderInvite();
