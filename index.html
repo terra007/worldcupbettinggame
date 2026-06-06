@@ -671,6 +671,8 @@ function pset(k,v){try{localStorage.setItem("wm26_"+k,JSON.stringify(v));}catch(
 
 /* ── Match data ───────────────────────────────────────────── */
 var ISO={Mexico:"mx","South Africa":"za",USA:"us",Paraguay:"py",Qatar:"qa",Switzerland:"ch",Brazil:"br",Morocco:"ma",Haiti:"ht",Scotland:"gb-sct",Germany:"de",Curacao:"cw",Netherlands:"nl",Japan:"jp","Ivory Coast":"ci",Ecuador:"ec",Spain:"es","Cape Verde":"cv",Belgium:"be",Egypt:"eg","Saudi Arabia":"sa",Uruguay:"uy",Iran:"ir","New Zealand":"nz",France:"fr",Senegal:"sn",Argentina:"ar",Algeria:"dz",Austria:"at",Jordan:"jo",England:"gb-eng",Croatia:"hr",Ghana:"gh",Panama:"pa",Uzbekistan:"uz",Colombia:"co","South Korea":"kr",Canada:"ca",Tunisia:"tn",Norway:"no",Portugal:"pt",Australia:"au"};
+var TEAM_DE={Mexico:"Mexiko","South Africa":"Südafrika",Qatar:"Katar",Switzerland:"Schweiz",Brazil:"Brasilien",Morocco:"Marokko",Scotland:"Schottland",Germany:"Deutschland",Curacao:"Curaçao",Netherlands:"Niederlande","Ivory Coast":"Elfenbeinküste",Spain:"Spanien","Cape Verde":"Kap Verde",Belgium:"Belgien",Egypt:"Ägypten","Saudi Arabia":"Saudi-Arabien","New Zealand":"Neuseeland",France:"Frankreich",Argentina:"Argentinien",Algeria:"Algerien",Austria:"Österreich",Jordan:"Jordanien",Croatia:"Kroatien",Uzbekistan:"Usbekistan",Colombia:"Kolumbien","South Korea":"Südkorea",Canada:"Kanada",Tunisia:"Tunesien",Norway:"Norwegen",Australia:"Australien"};
+Object.keys(TEAM_DE).forEach(function(en){ISO[TEAM_DE[en]]=ISO[en];});
 var MATCHES=[
   ["m01","A","Mexico","South Africa","2026-06-11T21:00:00Z"],
   ["m02","D","USA","Paraguay","2026-06-13T04:00:00Z"],
@@ -786,7 +788,7 @@ function fmtTime(ts){
 function dayKey(ts){var d=new Date(ts);return d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 var toastT;
-function rn(m,s){return (matchOverrides[m.id]||{})[s]||m[s];}
+function rn(m,s){var ov=(matchOverrides[m.id]||{})[s];if(ov)return ov;var n=m[s];return(lang==="de"&&TEAM_DE[n])||n;}
 function genUUID(){
   if(crypto.randomUUID) return crypto.randomUUID();
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(c){
