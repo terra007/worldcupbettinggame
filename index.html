@@ -318,6 +318,8 @@ de:{
   tab_org:"Organisator",
   back_btn:"← Alle Pools",
   playing_as:"Spielend als",
+  logout_btn:"Abmelden",
+  logout_confirm:"Wirklich abmelden?",
   players_in_pool:"Spieler im Pool",
   player_in_pool:"Spieler im Pool",
   your_pools:"Deine Pools",
@@ -494,6 +496,8 @@ en:{
   tab_org:"Organizer",
   back_btn:"← All pools",
   playing_as:"Playing as",
+  logout_btn:"Log out",
+  logout_confirm:"Really log out?",
   players_in_pool:"players in pool",
   player_in_pool:"player in pool",
   your_pools:"Your pools",
@@ -1131,7 +1135,14 @@ function renderMeBar(){
   var count=currentPool?roster.length:0;
   var poolInfo=currentPool?(count+" "+t(count===1?"player_in_pool":"players_in_pool")):"";
   $("#meBar").innerHTML='<span class="me-chip">'+esc(t("playing_as"))+' <b>'+esc(me)+'</b></span>'+
-    (poolInfo?'<span>'+esc(poolInfo)+'</span>':"");
+    (poolInfo?'<span>'+esc(poolInfo)+'</span>':"")+
+    '<button class="btn ghost" id="logoutBtn" style="padding:6px 12px;font-size:12px">'+esc(t("logout_btn"))+'</button>';
+  var lb=$("#logoutBtn"); if(lb) lb.onclick=logout;
+}
+function logout(){
+  if(!window.confirm(t("logout_confirm")))return;
+  pset("me",null); pset("token",null); pset("pendingPool",null);
+  window.location.href=window.location.pathname;
 }
 
 /* ── Back button ──────────────────────────────────────────── */
