@@ -694,7 +694,6 @@ var ISO={Mexico:"mx","South Africa":"za",USA:"us",Paraguay:"py",Qatar:"qa",Switz
 var TEAM_DE={Mexico:"Mexiko","South Africa":"Südafrika",Qatar:"Katar",Switzerland:"Schweiz",Brazil:"Brasilien",Morocco:"Marokko",Scotland:"Schottland",Germany:"Deutschland",Curacao:"Curaçao",Netherlands:"Niederlande","Ivory Coast":"Elfenbeinküste",Spain:"Spanien","Cape Verde":"Kap Verde",Belgium:"Belgien",Egypt:"Ägypten","Saudi Arabia":"Saudi-Arabien","New Zealand":"Neuseeland",France:"Frankreich",Argentina:"Argentinien",Algeria:"Algerien",Austria:"Österreich",Jordan:"Jordanien",Croatia:"Kroatien",Uzbekistan:"Usbekistan",Colombia:"Kolumbien","South Korea":"Südkorea",Canada:"Kanada",Tunisia:"Tunesien",Norway:"Norwegen",Australia:"Australien"};
 Object.keys(TEAM_DE).forEach(function(en){ISO[TEAM_DE[en]]=ISO[en];});
 var GRP_KEYS=["A","B","C","D","E","F","G","H","I","J","K","L"];
-var WM_TEAMS=(function(){var t=[];MATCHES.forEach(function(m){if(GRP_KEYS.indexOf(m.grp)!==-1){if(t.indexOf(m.h)===-1)t.push(m.h);if(t.indexOf(m.a)===-1)t.push(m.a);}});return t.sort();})();
 function rnTeam(n){return(lang==="de"&&TEAM_DE[n])||n;}
 var MATCHES=[
   ["m01","A","Mexico","South Africa","2026-06-11T19:00:00Z"],
@@ -784,6 +783,8 @@ var MATCHES=[
   ["m85","3P","L83","L84","2026-07-18T21:00:00Z"],
   ["m86","FIN","W83","W84","2026-07-19T19:00:00Z"]
 ].map(function(m){return {id:m[0],grp:m[1],h:m[2],a:m[3],kt:new Date(m[4]).getTime()};});
+var KICKOFFS=(function(){var o={};MATCHES.forEach(function(m){o[m.id]=m.kt;});return o;})();
+var WM_TEAMS=(function(){var t=[];MATCHES.forEach(function(m){if(GRP_KEYS.indexOf(m.grp)!==-1){if(t.indexOf(m.h)===-1)t.push(m.h);if(t.indexOf(m.a)===-1)t.push(m.a);}});return t.sort();})();
 
 /* ── App state ────────────────────────────────────────────── */
 var me=null, currentPool=null, orgUnlocked=false, orgCode="", myToken=null;
