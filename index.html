@@ -1575,6 +1575,7 @@ function renderInvite(){
     '<div class="pnl"><h2>'+esc(t("invite_h"))+' <span class="em">'+esc(currentPool.name)+'</span></h2>'+
     '<p>'+esc(t("invite_p"))+'</p>'+
     '<div class="invite-code">'+esc(currentPool.inviteCode)+'</div>'+
+    '<div id="invite-qr" style="display:flex;justify-content:center;margin:18px 0 4px"></div>'+
     '<div class="row-in"><input class="txt" id="inviteUrl" readonly value="'+esc(poolUrl)+'" style="flex:1;min-width:160px">'+
     '<button class="btn" id="copyUrl">'+esc(t("copy_btn"))+'</button></div>'+
     '<div class="row-in" style="margin-top:10px">'+
@@ -1591,6 +1592,10 @@ function renderInvite(){
     try{navigator.clipboard.writeText(inp.value);toast(t("toast_link_copied"));}
     catch(e){try{document.execCommand("copy");toast(t("toast_link_copied"));}catch(_){toast(t("toast_copy_manual"));}}
   };
+  var qrEl=$("#invite-qr");
+  if(qrEl && typeof QRCode!=="undefined"){
+    new QRCode(qrEl,{text:poolUrl,width:180,height:180,colorDark:"#1a3a1a",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+  }
 }
 
 /* ── Organizer ────────────────────────────────────────────── */
@@ -1746,6 +1751,7 @@ $("#tabs").addEventListener("click",function(e){
 init();
 })();
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
   if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 </script>
